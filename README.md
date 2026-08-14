@@ -26,55 +26,67 @@ cd neurograph-simulations
 
 ---
 
-## RUN-TESTS-A.ps1  ![Interactive](https://img.shields.io/badge/Type-Interactive-9b7eff?style=flat-square)
+## Test Scripts
 
-```powershell
-.\RUN-TESTS-A.ps1
-```
+<table><tr>
 
-Runs a **single shard** with 2664 nodes and 37 attacker types (T0-T36). Each test applies one attacker percentage across all nodes within that shard, measuring how the system handles concentrated adversarial pressure at different intensities.
+<td width="50%" valign="top">
 
-| Parameter | Value |
-|:----------|:-----:|
-| Mode | Single shard |
-| Nodes | 2664 |
-| Attacker types | 37 (T0-T36) |
-| Attacker % | 0% to 90% |
-| Steps | 10K / 30K / 50K / 100K |
+<h3 align="center">RUN-TESTS-A.ps1 <img src="https://img.shields.io/badge/Interactive-9b7eff?style=flat-square" alt="Interactive"/></h3>
 
-| Option | Category | Config |
-|:------:|:--------:|:------|
-| 1-5 | Security | 10K steps, 10%-90% atk |
-| 6-8 | Clean | 50K-500K steps, 0% atk |
-| 9-10 | Resistance | 100K-200K steps, 30%-35% |
-| 11-13 | Quick | 500 steps, 10%-50% atk |
-| 20-22 | Batch | All security / all quick / full |
+<p align="center"><code>.\RUN-TESTS-A.ps1</code></p>
 
----
+<p>Runs a <strong>single shard</strong> with 2664 nodes and 37 attacker types (T0-T36). Each test applies one attacker percentage across all nodes within that shard, measuring how the system handles concentrated adversarial pressure at different intensities.</p>
 
-## RUN-NG-BENCHMARK.ps1  ![Benchmark](https://img.shields.io/badge/Type-Benchmark-00d4aa?style=flat-square)
+<table width="100%">
+<tr><th align="left">Parameter</th><th align="right">Value</th></tr>
+<tr><td>Mode</td><td align="right">Single shard</td></tr>
+<tr><td>Nodes</td><td align="right">2664</td></tr>
+<tr><td>Attacker types</td><td align="right">37 (T0-T36)</td></tr>
+<tr><td>Attacker %</td><td align="right">0% to 90%</td></tr>
+<tr><td>Steps</td><td align="right">10K / 30K / 50K / 100K</td></tr>
+</table>
 
-```powershell
-.\RUN-NG-BENCHMARK.ps1
-```
+<table width="100%">
+<tr><th align="left">Option</th><th>Category</th><th align="right">Config</th></tr>
+<tr><td>1-5</td><td align="center">Security</td><td align="right">10K steps, 10%-90%</td></tr>
+<tr><td>6-8</td><td align="center">Clean</td><td align="right">50K-500K, 0% atk</td></tr>
+<tr><td>9-10</td><td align="center">Resistance</td><td align="right">100K-200K, 30%-35%</td></tr>
+<tr><td>11-13</td><td align="center">Quick</td><td align="right">500 steps, 10%-50%</td></tr>
+<tr><td>20-22</td><td align="center">Batch</td><td align="right">All / Quick / Full</td></tr>
+</table>
 
-Runs **333 shards in parallel** (4 shards batched, 2 Rayon threads each) with 8 nodes per shard and 37 attacker types (T0-T36). Measures TPS, latency, and security across a distributed multi-shard network under varying shard counts and attacker loads.
+</td>
 
-| Parameter | Value |
-|:----------|:-----:|
-| Mode | Multi-shard (parallel) |
-| Nodes | 2664 (333 x 8) |
-| Attacker types | 37 (T0-T36) |
-| Attacker % | 0% to 50% |
-| Shards | 100 / 200 / 222 / 333 / 444 |
+<td width="50%" valign="top">
 
-| Option | Category | Config |
-|:------:|:--------:|:------|
-| 1-5 | Clean | 333-444 shards, 0% atk |
-| 6-8 | Attack | 333 shards, 10%-50% atk |
-| 9-10 | Scaled | 100-200 shards, 10% atk |
-| 11 | Custom | Manual all parameters |
-| 99 | Info | List 37 attacker types |
+<h3 align="center">RUN-NG-BENCHMARK.ps1 <img src="https://img.shields.io/badge/Benchmark-00d4aa?style=flat-square" alt="Benchmark"/></h3>
+
+<p align="center"><code>.\RUN-NG-BENCHMARK.ps1</code></p>
+
+<p>Runs <strong>333 shards in parallel</strong> (4 shards batched, 2 Rayon threads each) with 8 nodes per shard and 37 attacker types (T0-T36). Measures TPS, latency, and security across a distributed multi-shard network under varying shard counts and attacker loads.</p>
+
+<table width="100%">
+<tr><th align="left">Parameter</th><th align="right">Value</th></tr>
+<tr><td>Mode</td><td align="right">Multi-shard (parallel)</td></tr>
+<tr><td>Nodes</td><td align="right">2664 (333 x 8)</td></tr>
+<tr><td>Attacker types</td><td align="right">37 (T0-T36)</td></tr>
+<tr><td>Attacker %</td><td align="right">0% to 50%</td></tr>
+<tr><td>Shards</td><td align="right">100 / 200 / 222 / 333 / 444</td></tr>
+</table>
+
+<table width="100%">
+<tr><th align="left">Option</th><th>Category</th><th align="right">Config</th></tr>
+<tr><td>1-5</td><td align="center">Clean</td><td align="right">333-444 shards, 0% atk</td></tr>
+<tr><td>6-8</td><td align="center">Attack</td><td align="right">333 shards, 10%-50%</td></tr>
+<tr><td>9-10</td><td align="center">Scaled</td><td align="right">100-200 shards, 10%</td></tr>
+<tr><td>11</td><td align="center">Custom</td><td align="right">Manual all params</td></tr>
+<tr><td>99</td><td align="center">Info</td><td align="right">List 37 atk types</td></tr>
+</table>
+
+</td>
+
+</tr></table>
 
 ---
 
