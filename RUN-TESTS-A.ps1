@@ -140,6 +140,9 @@ function PrintBanner($title) {
 
 # --- Build / verify binary ---
 function EnsureBinary {
+    if ($PrecompiledBinary) {
+        return $PrecompiledBinary
+    }
     $binary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
     if (-not (Test-Path $binary)) {
         LogInfo 'Building sim_stress_v43ext...'
