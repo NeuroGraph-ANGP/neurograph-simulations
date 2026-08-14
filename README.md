@@ -28,7 +28,7 @@ cd neurograph-simulations
 
 Then choose a test script:
 
-<table align="center" width="100%">
+<table width="100%">
 <tr>
 <th width="50%" align="center">
 
@@ -52,14 +52,21 @@ Then choose a test script:
 
 **Explore specific scenarios**
 
-| Step Set | Options | Attacker % |
-|:--------|:-------:|:----------:|
-| 10K | 1--9 | 10%--90% |
-| 30K | 11--19 | 10%--90% |
-| 50K | 21--29 | 10%--90% |
-| 100K | 31--39 | 10%--90% |
-| QUICK | 51 | 10% |
-| CUSTOM | 88 | any |
+| Parameter | Value |
+|:----------|:-----:|
+| Shards | 10K / 30K / 50K / 100K |
+| Nodes | 8 |
+| Attacker | 10%--90% |
+| Output | TPS report |
+
+| Option | Step Set | Attacker % |
+|:------:|:--------:|:----------:|
+| 1--9 | 10K | 10%--90% |
+| 11--19 | 30K | 10%--90% |
+| 21--29 | 50K | 10%--90% |
+| 31--39 | 100K | 10%--90% |
+| 51 | QUICK | 10% |
+| 88 | CUSTOM | any |
 
 </td>
 <td align="center" valign="top">
@@ -72,10 +79,17 @@ Then choose a test script:
 
 | Parameter | Value |
 |:----------|:-----:|
-| Duration | 333s |
+| Shards | 333 |
 | Nodes | 8 |
 | Attacker | 20% |
 | Output | TPS report |
+
+| Metric | Description |
+|:------:|:------------|
+| TPS | Transactions per second |
+| Latency | Per-shard latency |
+| Security | Attacker success rate |
+| Integrity | DAG integrity score |
 
 </td>
 </tr>
