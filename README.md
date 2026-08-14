@@ -28,7 +28,7 @@ cd neurograph-simulations
 
 ## Test Scripts
 
-| | RUN-TESTS-A.ps1 <img src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23888888%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%229%22 y=%229%22 width=%2213%22 height=%2213%22 rx=%222%22 ry=%222%22></rect><path d=%22M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1%22></path></svg>"> | RUN-NG-BENCHMARK.ps1 <img src="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23888888%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><rect x=%229%22 y=%229%22 width=%2213%22 height=%2213%22 rx=%222%22 ry=%222%22></rect><path d=%22M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1%22></path></svg>"> |
+| | RUN-TESTS-A.ps1 <img src="copy-icon.svg" width="16"> | RUN-NG-BENCHMARK.ps1 <img src="copy-icon.svg" width="16"> |
 |:---|:---|:---|
 | | ![Single Shard](https://img.shields.io/badge/Single_Shard-9b7eff?style=for-the-badge) | ![Multi Shard](https://img.shields.io/badge/Multi_Shard-00d4aa?style=for-the-badge) |
 | **Mode** | Single shard | Multi-shard (parallel) |
