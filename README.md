@@ -28,7 +28,7 @@ cd neurograph-simulations
 
 ## Test Scripts
 
-| | RUN-TESTS-A.ps1 <img src="copy-icon.svg" width="16"> | RUN-NG-BENCHMARK.ps1 <img src="copy-icon.svg" width="16"> |
+| | RUN-TESTS-A.ps1 | RUN-NG-BENCHMARK.ps1 |
 |:---|:---|:---|
 | | ![Single Shard](https://img.shields.io/badge/Single_Shard-9b7eff?style=for-the-badge) | ![Multi Shard](https://img.shields.io/badge/Multi_Shard-00d4aa?style=for-the-badge) |
 | **Mode** | Single shard | Multi-shard (parallel) |
