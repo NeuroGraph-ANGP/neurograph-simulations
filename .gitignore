@@ -1,0 +1,22 @@
+﻿# ANGP engine source -- not included
+src/
+Cargo.toml
+Cargo.lock
+
+# Local results
+results/*.txt
+results/*.csv
+results/*.log
+results/*.json
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
+*.tmp
+*.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
