@@ -20,3 +20,10 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Test output directories (local only)
+benchmark-reports/
+results-*/
+shard-logs-*/
+*.log
+*.tmp
