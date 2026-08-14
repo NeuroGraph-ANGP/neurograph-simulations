@@ -18,11 +18,35 @@
 
 ## Quick Start
 
+**Step 1:** Open PowerShell as Administrator, then allow scripts to run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+**Step 2:** Download the repository and enter its folder:
+
 ```powershell
 git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
 cd neurograph-simulations
+```
+
+> No git? Download ZIP from the green **Code** button above, extract, and open PowerShell in that folder.
+
+**Step 3:** Download the simulation engine (internet needed, first run only):
+
+```powershell
 .\setup.ps1
 ```
+
+**Step 4:** Run a test. Pick one:
+
+```powershell
+.\RUN-TESTS-A.ps1          # Single-shard: pick attacker % and step count
+.\RUN-NG-BENCHMARK.ps1     # Multi-shard: benchmark TPS across 333 shards
+```
+
+> Each script shows a menu. Type a number and press Enter. Results are saved automatically in the results folder.
 
 ---
 
