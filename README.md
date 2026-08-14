@@ -32,23 +32,23 @@ cd neurograph-simulations
 .\RUN-TESTS-A.ps1
 ```
 
-> Runs nodes within a **single shard**. Use this to test individual attacker scenarios at specific step counts and percentages.
+Runs a **single shard** with 2664 nodes and 37 attacker types (T0-T36). Each test applies one attacker percentage across all nodes within that shard, measuring how the system handles concentrated adversarial pressure at different intensities.
 
 | Parameter | Value |
 |:----------|:-----:|
-| Shards | 1 (single) |
+| Mode | Single shard |
+| Nodes | 2664 |
+| Attacker types | 37 (T0-T36) |
+| Attacker % | 0% to 90% |
 | Steps | 10K / 30K / 50K / 100K |
-| Nodes | 8 |
-| Attacker | 10% to 90% |
 
-| Option | Steps | Attacker |
-|:------:|:-----:|:--------:|
-| 1-9 | 10K | 10%-90% |
-| 11-19 | 30K | 10%-90% |
-| 21-29 | 50K | 10%-90% |
-| 31-39 | 100K | 10%-90% |
-| 51 | QUICK | 10% |
-| 88 | CUSTOM | any |
+| Option | Category | Config |
+|:------:|:--------:|:------|
+| 1-5 | Security | 10K steps, 10%-90% atk |
+| 6-8 | Clean | 50K-500K steps, 0% atk |
+| 9-10 | Resistance | 100K-200K steps, 30%-35% |
+| 11-13 | Quick | 500 steps, 10%-50% atk |
+| 20-22 | Batch | All security / all quick / full |
 
 ---
 
@@ -58,28 +58,30 @@ cd neurograph-simulations
 .\RUN-NG-BENCHMARK.ps1
 ```
 
-> Runs **multi-shard simulations** (333 shards) to reproduce the exact TPS, latency, and security metrics reported in the paper.
+Runs **333 shards in parallel** (4 shards batched, 2 Rayon threads each) with 8 nodes per shard and 37 attacker types (T0-T36). Measures TPS, latency, and security across a distributed multi-shard network under varying shard counts and attacker loads.
 
 | Parameter | Value |
 |:----------|:-----:|
-| Shards | 333 |
-| Nodes | 8 |
-| Attacker | 20% |
-| Output | TPS report |
+| Mode | Multi-shard (parallel) |
+| Nodes | 2664 (333 x 8) |
+| Attacker types | 37 (T0-T36) |
+| Attacker % | 0% to 50% |
+| Shards | 100 / 200 / 222 / 333 / 444 |
 
-| Metric | Description |
-|:------:|:------------|
-| TPS | Transactions per second |
-| Latency | Per-shard latency |
-| Security | Attacker success rate |
-| Integrity | DAG integrity score |
+| Option | Category | Config |
+|:------:|:--------:|:------|
+| 1-5 | Clean | 333-444 shards, 0% atk |
+| 6-8 | Attack | 333 shards, 10%-50% atk |
+| 9-10 | Scaled | 100-200 shards, 10% atk |
+| 11 | Custom | Manual all parameters |
+| 99 | Info | List 37 attacker types |
 
 ---
 
 ## Reproducing Paper Results
 
-> **1.** Run `.\RUN-NG-BENCHMARK.ps1` for the full benchmark
-> **2.** Run `.\RUN-TESTS-A.ps1` to explore individual scenarios
+> **1.** Run `.\RUN-NG-BENCHMARK.ps1` for the full multi-shard benchmark
+> **2.** Run `.\RUN-TESTS-A.ps1` for single-shard security analysis
 > **3.** Compare your results with the paper's reported values
 
 ---
