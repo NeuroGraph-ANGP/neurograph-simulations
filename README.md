@@ -32,7 +32,7 @@ cd neurograph-simulations
 
 <td width="50%" valign="top">
 
-<h3 align="center">RUN-TESTS-A.ps1 <img src="https://img.shields.io/badge/Interactive-9b7eff?style=flat-square" alt="Interactive"/></h3>
+<h3 align="center">RUN-TESTS-A.ps1 <img src="https://img.shields.io/badge/Single_Shard-9b7eff?style=flat-square" alt="Single Shard"/></h3>
 
 <p align="center"><code>.\RUN-TESTS-A.ps1</code></p>
 
@@ -43,7 +43,7 @@ cd neurograph-simulations
 <tr><td>Mode</td><td align="right">Single shard</td></tr>
 <tr><td>Nodes</td><td align="right">2664</td></tr>
 <tr><td>Attacker types</td><td align="right">37 (T0-T36)</td></tr>
-<tr><td>Attacker %</td><td align="right">0% to 90%</td></tr>
+<tr><td>Attacker %</td><td align="right">0 to 99%</td></tr>
 <tr><td>Steps</td><td align="right">10K / 30K / 50K / 100K</td></tr>
 </table>
 
@@ -60,7 +60,7 @@ cd neurograph-simulations
 
 <td width="50%" valign="top">
 
-<h3 align="center">RUN-NG-BENCHMARK.ps1 <img src="https://img.shields.io/badge/Benchmark-00d4aa?style=flat-square" alt="Benchmark"/></h3>
+<h3 align="center">RUN-NG-BENCHMARK.ps1 <img src="https://img.shields.io/badge/Multi_Shard-00d4aa?style=flat-square" alt="Multi Shard"/></h3>
 
 <p align="center"><code>.\RUN-NG-BENCHMARK.ps1</code></p>
 
@@ -71,7 +71,7 @@ cd neurograph-simulations
 <tr><td>Mode</td><td align="right">Multi-shard (parallel)</td></tr>
 <tr><td>Nodes</td><td align="right">2664 (333 x 8)</td></tr>
 <tr><td>Attacker types</td><td align="right">37 (T0-T36)</td></tr>
-<tr><td>Attacker %</td><td align="right">0% to 50%</td></tr>
+<tr><td>Attacker %</td><td align="right">0 to 99%</td></tr>
 <tr><td>Shards</td><td align="right">100 / 200 / 222 / 333 / 444</td></tr>
 </table>
 
