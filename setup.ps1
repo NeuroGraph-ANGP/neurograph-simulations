@@ -3,7 +3,6 @@ Set-ExecutionPolicy -Scope Process Bypass
  $ErrorActionPreference = "Stop"
 
  $REPO = "NeuroGraph-ANGP/neurograph-simulations"
- $BINARY = "angp.exe"
  $BIN_DIR = "$PSScriptRoot\bin"
  $RELEASE_API = "https://api.github.com/repos/$REPO/releases/latest"
 
@@ -13,16 +12,21 @@ Write-Host "  NeuroGraph ANGP v4.3 -- Setup" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
-if (Test-Path "$BIN_DIR\$BINARY") {
-    Write-Host "[OK] $BINARY already present in bin\" -ForegroundColor Green
-    exit 0
-}
-
+# Creeaza directorul bin
 if (-not (Test-Path $BIN_DIR)) {
     New-Item -ItemType Directory -Path $BIN_DIR | Out-Null
     Write-Host "[OK] Created bin\ directory" -ForegroundColor Green
 }
 
+# Verifica daca binary-urile exista deja
+ $existing = Get-ChildItem "$BIN_DIR\*.exe" -ErrorAction SilentlyContinue
+if ($existing.Count -ge 2) {
+    Write-Host "[OK] Binaries already present in bin\" -ForegroundColor Green
+    $existing | ForEach-Object { Write-Host "     - $($_.Name)" -ForegroundColor DarkGray }
+    exit 0
+}
+
+# Descarca de la GitHub Releases
 Write-Host "[...] Fetching latest release from GitHub..." -ForegroundColor Yellow
 
 try {
@@ -33,35 +37,28 @@ try {
     exit 1
 }
 
- $asset = $release.assets | Where-Object { $_.name -eq $BINARY }
+ $assets = $release.assets | Where-Object { $_.name -like "*.exe" }
 
-if (-not $asset) {
-    Write-Host "[FAIL] Binary '$BINARY' not found in latest release!" -ForegroundColor Red
-    Write-Host "       Available assets:" -ForegroundColor Yellow
-    $release.assets | ForEach-Object { Write-Host "         - $($_.name)" -ForegroundColor DarkGray }
-    Write-Host ""
+if ($assets.Count -eq 0) {
+    Write-Host "[FAIL] No .exe binaries found in latest release!" -ForegroundColor Red
     Write-Host "       Visit: https://github.com/$REPO/releases" -ForegroundColor Yellow
     exit 1
 }
 
- $downloadUrl = $asset.browser_download_url
- $outputPath = "$BIN_DIR\$BINARY"
+Write-Host "[...] Downloading $($assets.Count) binaries from release $($release.tag_name)..." -ForegroundColor Yellow
 
-Write-Host "[...] Downloading $BINARY from GitHub Releases..." -ForegroundColor Yellow
-Write-Host "       Release: $($release.tag_name)" -ForegroundColor DarkGray
-
-try {
-    Invoke-WebRequest -Uri $downloadUrl -OutFile $outputPath -Headers @{ "User-Agent" = "NeuroGraph7Setup/1.0" }
-} catch {
-    Write-Host "[FAIL] Download failed: $($_.Exception.Message)" -ForegroundColor Red
-    exit 1
-}
-
- $fileSize = (Get-Item $outputPath).Length
-if ($fileSize -gt 1MB) {
-    Write-Host "[OK] Downloaded $BINARY ($([math]::Round($fileSize/1MB, 1)) MB)" -ForegroundColor Green
-} else {
-    Write-Host "[WARN] Binary seems too small ($fileSize bytes). May be corrupt." -ForegroundColor Yellow
+foreach ($asset in $assets) {
+    $outputPath = "$BIN_DIR\$($asset.name)"
+    Write-Host "     - $($asset.name)..." -ForegroundColor DarkGray -NoNewline
+    
+    try {
+        Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $outputPath -Headers @{ "User-Agent" = "NeuroGraph7Setup/1.0" }
+        $size = [math]::Round((Get-Item $outputPath).Length / 1KB, 0)
+        Write-Host " OK ($size KB)" -ForegroundColor Green
+    } catch {
+        Write-Host " FAIL" -ForegroundColor Red
+        Write-Host "       $($_.Exception.Message)" -ForegroundColor DarkRed
+    }
 }
 
 Write-Host ""
