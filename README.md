@@ -18,99 +18,47 @@
 
 ## Quick Start
 
-**Step 1:** Open PowerShell. If scripts are blocked, allow them:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-```
-
-**Step 2:** Download and enter the repository:
-
 ```powershell
 git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
 cd neurograph-simulations
-```
-
-> No git? Click the green **Code** button above, then **Download ZIP**. Extract it, open PowerShell in that folder.
-
-**Step 3:** Download the simulation engine (internet needed, first run only):
-
-```powershell
 .\setup.ps1
 ```
-
-**Step 4:** Run a test:
-
-```powershell
-.\RUN-TESTS-A.ps1          # Single-shard tests
-.\RUN-NG-BENCHMARK.ps1     # Multi-shard benchmark
-```
-
-> Each script shows a menu. Type a number and press Enter. Results are saved automatically.
 
 ---
 
 ## Test Scripts
 
-<table><tr>
+| | RUN-TESTS-A.ps1 ![Single Shard](https://img.shields.io/badge/-Single_Shard-9b7eff?style=flat-square) | RUN-NG-BENCHMARK.ps1 ![Multi Shard](https://img.shields.io/badge/-Multi_Shard-00d4aa?style=flat-square) |
+|:---|:---|:---|
+| **Run** | `.\RUN-TESTS-A.ps1` | `.\RUN-NG-BENCHMARK.ps1` |
+| **Mode** | Single shard | Multi-shard (parallel) |
+| **Nodes** | 2664 | 2664 (333 x 8) |
+| **Attacker types** | 37 (T0-T36) | 37 (T0-T36) |
+| **Attacker %** | 0 to 99% | 0 to 99% |
+| **Key config** | Steps: 10K-100K | Shards: 100-444 |
+| **Purpose** | Test adversarial pressure at different intensities within one shard | Benchmark TPS, latency and security across distributed multi-shard network |
 
-<td width="50%" valign="top">
+---
 
-<h3 align="center">RUN-TESTS-A.ps1 <img src="https://img.shields.io/badge/Single_Shard-9b7eff?style=flat-square" alt="Single Shard"/></h3>
+## RUN-TESTS-A.ps1 Options
 
-<p align="center"><code>.\RUN-TESTS-A.ps1</code></p>
+| Option | Category | Config |
+|:------:|:--------:|:------|
+| 1-5 | Security | 10K steps, 10%-90% attacker |
+| 6-8 | Clean | 50K-500K steps, 0% attacker |
+| 9-10 | Resistance | 100K-200K steps, 30%-35% |
+| 11-13 | Quick | 500 steps, 10%-50% |
+| 20-22 | Batch | All / Quick / Full sweep |
 
-<p>Runs a <strong>single shard</strong> with 2664 nodes and 37 attacker types (T0-T36). Each test applies one attacker percentage across all nodes within that shard, measuring how the system handles concentrated adversarial pressure at different intensities.</p>
+## RUN-NG-BENCHMARK.ps1 Options
 
-<table width="100%">
-<tr><th align="left">Parameter</th><th align="right">Value</th></tr>
-<tr><td>Mode</td><td align="right">Single shard</td></tr>
-<tr><td>Nodes</td><td align="right">2664</td></tr>
-<tr><td>Attacker types</td><td align="right">37 (T0-T36)</td></tr>
-<tr><td>Attacker %</td><td align="right">0 to 99%</td></tr>
-<tr><td>Steps</td><td align="right">10K / 30K / 50K / 100K</td></tr>
-</table>
-
-<table width="100%">
-<tr><th align="left">Option</th><th>Category</th><th align="right">Config</th></tr>
-<tr><td>1-5</td><td align="center">Security</td><td align="right">10K steps, 10%-90%</td></tr>
-<tr><td>6-8</td><td align="center">Clean</td><td align="right">50K-500K, 0% atk</td></tr>
-<tr><td>9-10</td><td align="center">Resistance</td><td align="right">100K-200K, 30%-35%</td></tr>
-<tr><td>11-13</td><td align="center">Quick</td><td align="right">500 steps, 10%-50%</td></tr>
-<tr><td>20-22</td><td align="center">Batch</td><td align="right">All / Quick / Full</td></tr>
-</table>
-
-</td>
-
-<td width="50%" valign="top">
-
-<h3 align="center">RUN-NG-BENCHMARK.ps1 <img src="https://img.shields.io/badge/Multi_Shard-00d4aa?style=flat-square" alt="Multi Shard"/></h3>
-
-<p align="center"><code>.\RUN-NG-BENCHMARK.ps1</code></p>
-
-<p>Runs <strong>333 shards in parallel</strong> (4 shards batched, 2 Rayon threads each) with 8 nodes per shard and 37 attacker types (T0-T36). Measures TPS, latency, and security across a distributed multi-shard network under varying shard counts and attacker loads.</p>
-
-<table width="100%">
-<tr><th align="left">Parameter</th><th align="right">Value</th></tr>
-<tr><td>Mode</td><td align="right">Multi-shard (parallel)</td></tr>
-<tr><td>Nodes</td><td align="right">2664 (333 x 8)</td></tr>
-<tr><td>Attacker types</td><td align="right">37 (T0-T36)</td></tr>
-<tr><td>Attacker %</td><td align="right">0 to 99%</td></tr>
-<tr><td>Shards</td><td align="right">100 / 200 / 222 / 333 / 444</td></tr>
-</table>
-
-<table width="100%">
-<tr><th align="left">Option</th><th>Category</th><th align="right">Config</th></tr>
-<tr><td>1-5</td><td align="center">Clean</td><td align="right">333-444 shards, 0% atk</td></tr>
-<tr><td>6-8</td><td align="center">Attack</td><td align="right">333 shards, 10%-50%</td></tr>
-<tr><td>9-10</td><td align="center">Scaled</td><td align="right">100-200 shards, 10%</td></tr>
-<tr><td>11</td><td align="center">Custom</td><td align="right">Manual all params</td></tr>
-<tr><td>99</td><td align="center">Info</td><td align="right">List 37 atk types</td></tr>
-</table>
-
-</td>
-
-</tr></table>
+| Option | Category | Config |
+|:------:|:--------:|:------|
+| 1-5 | Clean | 333-444 shards, 0% attacker |
+| 6-8 | Attack | 333 shards, 10%-50% |
+| 9-10 | Scaled | 100-200 shards, 10% |
+| 11 | Custom | Configure all parameters |
+| 99 | Info | List 37 attacker types |
 
 ---
 
@@ -124,9 +72,9 @@ cd neurograph-simulations
 
 ## System Requirements
 
-[![Windows 10/11](https://img.shields.io/badge/OS-Windows_10_/_11-4a9eff?style=flat-square)]()
-[![PowerShell 5.1+](https://img.shields.io/badge/Shell-PowerShell_5.1+-5391F2?style=flat-square)]()
-[![Internet: first run only](https://img.shields.io/badge/Internet-first_run_only-888?style=flat-square)]()
+[![Windows](https://img.shields.io/badge/OS-Windows_10_/_11-4a9eff?style=flat-square)]()
+[![PowerShell](https://img.shields.io/badge/Shell-PowerShell_5.1+-5391F2?style=flat-square)]()
+[![Internet](https://img.shields.io/badge/Internet-first_run_only-888?style=flat-square)]()
 
 ---
 
