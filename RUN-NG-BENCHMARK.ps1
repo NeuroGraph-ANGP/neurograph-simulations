@@ -52,22 +52,27 @@ if ($isWindows) {
 $originalPath = Get-Location
 
 $ProjectDir = (Get-Location).Path
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = $PSScriptRoot }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
-    $dir = (Get-Location).Path
-    for ($k = 0; $k -lt 5; $k++) {
-        if (Test-Path "$dir\Cargo.toml") { $ProjectDir = $dir; break }
-        $parent = Split-Path $dir -Parent
-        if ($parent -eq $dir) { break }
-        $dir = $parent
+# --- Pre-compiled binary detection ---
+$PrecompiledBinary = $null
+$preBin = Join-Path $PSScriptRoot "bin\sim_stress_v43ext.exe"
+if (Test-Path $preBin) {
+    $PrecompiledBinary = $preBin
+    Write-Host "[SETUP] Pre-compiled binary found: $preBin" -ForegroundColor Green
+    $ProjectDir = $PSScriptRoot
+} else {
+    # Fallback: find project root via Cargo.toml
+    $current = $PSScriptRoot
+    while ($current -and -not (Test-Path (Join-Path $current "Cargo.toml"))) {
+        $current = Split-Path $current -Parent
     }
+    if (-not $current -or -not (Test-Path (Join-Path $current "Cargo.toml"))) {
+        Write-Host "CRITICAL ERROR: No pre-compiled binary and Cargo.toml not found!" -ForegroundColor Red
+        Write-Host "Run setup.ps1 first to download the binary." -ForegroundColor Yellow
+        exit 1
+    }
+    $ProjectDir = $current
+    Write-Host "[SETUP] Using source build from: $ProjectDir" -ForegroundColor Cyan
 }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
-    Write-Host '  CRITICAL ERROR: Cargo.toml not found!' -ForegroundColor Red
-    Write-Host '  Run this script FROM the project folder (where Cargo.toml is)' -ForegroundColor Yellow
-    Read-Host 'Press ENTER'; exit 1
-}
-Set-Location $ProjectDir
 
 $exeExt = if ($isWindows) { '.exe' } else { '' }
 $sep = if ($isWindows) { '\' } else { '/' }
@@ -82,33 +87,27 @@ if (-not $coreCount) { $coreCount = $env:NUMBER_OF_PROCESSORS }
 if (-not $coreCount) { $coreCount = '?' }
 $osName = if ($isWindows) { 'Windows' } else { 'Linux/macOS' }
 
-Write-Host ''
-Write-Host '=============================================================' -ForegroundColor Cyan
-Write-Host '  NeuroGraph ANGP v4.3-EXT -- BUILD sim_stress_v43ext...' -ForegroundColor Cyan
-Write-Host '  37 Attacker Types (T0-T36) | Behavioral Strategies' -ForegroundColor Gray
-Write-Host '=============================================================' -ForegroundColor Cyan
-Write-Host ''
-Write-Host ("  Project: {0}" -f $ProjectDir) -ForegroundColor Gray
-Write-Host ("  CPU: {0} cores  |  OS: {1}" -f $coreCount, $osName) -ForegroundColor Gray
-Write-Host ''
-
-# Delete stale Cargo.lock to avoid registry version conflicts (icu_normalizer etc.)
-if (Test-Path "$ProjectDir\Cargo.lock") {
-    Remove-Item "$ProjectDir\Cargo.lock" -Force -ErrorAction SilentlyContinue
-    Write-Host '  Cargo.lock deleted (will regenerate on build)' -ForegroundColor DarkGray
+if ($PrecompiledBinary) {
+    $simBinary = $PrecompiledBinary
+    Write-Host "[BUILD] Using pre-compiled binary: $simBinary" -ForegroundColor Green
+} else {
+    Write-Host "[BUILD] Compiling from source..." -ForegroundColor Cyan
+    Push-Location $ProjectDir
+    try {
+        cargo build --release --example sim_stress_v43ext 2>&1 | ForEach-Object { Write-Host $_ }
+        if ($LASTEXITCODE -ne 0) { throw "cargo build failed with exit code $LASTEXITCODE" }
+    } finally {
+        Pop-Location
+    }
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    $exeExt = if ($IsWindows -or $env:OS -match "Windows") { ".exe" } else { "" }
+    $simBinary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
+    if (-not (Test-Path $simBinary)) {
+        Write-Host "CRITICAL ERROR: Binary not found at $simBinary" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "[BUILD] Compiled: $simBinary" -ForegroundColor Green
 }
-
-cargo build --release --example sim_stress_v43ext 2>&1 | ForEach-Object { Write-Host ("  {0}" -f $_) }
-if ($LASTEXITCODE -ne 0) {
-    Write-Host ''
-    Write-Host '  Build FAILED!' -ForegroundColor Red
-    Read-Host 'Press ENTER'; exit 1
-}
-$simBinary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
-Write-Host ''
-Write-Host ('  Binary: {0}' -f $simBinary) -ForegroundColor Green
-Write-Host '  Build OK!' -ForegroundColor Green
-Write-Host ''
 
 # ===================== PRESETS =====================
 # All presets use 10,000 steps by default

@@ -27,3 +27,6 @@ results-*/
 shard-logs-*/
 *.log
 *.tmp
+
+# Downloaded binary (use setup.ps1 to get it)
+bin/*.exe

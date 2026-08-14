@@ -49,22 +49,31 @@ $ErrorActionPreference = "Continue"
 chcp 65001 > $null 2>&1
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# --- Find project folder (Cargo.toml) ---
-$ProjectDir = $PSScriptRoot
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
-    $ProjectDir = (Get-Location).Path
-    for ($k = 0; $k -lt 5; $k++) {
-        if (Test-Path "$ProjectDir\Cargo.toml") { break }
-        $parent = Split-Path $ProjectDir -Parent
-        if ($parent -eq $ProjectDir) { break }
-        $ProjectDir = $parent
+# --- Find simulation binary (pre-compiled or build from source) ---
+$PrecompiledBinary = $null
+$preBin = Join-Path $PSScriptRoot 'bin\sim_stress_v43ext.exe'
+if (Test-Path $preBin) {
+    $PrecompiledBinary = $preBin
+    $ProjectDir = $PSScriptRoot
+    Write-Host '  Using pre-compiled binary from bin\' -ForegroundColor Green
+} else {
+    $ProjectDir = $PSScriptRoot
+    if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
+        $ProjectDir = (Get-Location).Path
+        for ($k = 0; $k -lt 5; $k++) {
+            if (Test-Path "$ProjectDir\Cargo.toml") { break }
+            $parent = Split-Path $ProjectDir -Parent
+            if ($parent -eq $ProjectDir) { break }
+            $ProjectDir = $parent
+        }
     }
-}
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3-ext' }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
-    Write-Host '  CRITICAL ERROR: Cargo.toml not found!' -ForegroundColor Red
-    Write-Host '  Run this script FROM the project folder (where Cargo.toml is)' -ForegroundColor Yellow
-    Read-Host 'Press ENTER'; exit 1
+    if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3-ext' }
+    if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
+        Write-Host '  CRITICAL: sim_stress_v43ext.exe not found in bin\ and Cargo.toml not found!' -ForegroundColor Red
+        Write-Host '  Run .\setup.ps1 first, or run from the project source folder.' -ForegroundColor Yellow
+        Read-Host 'Press ENTER'; exit 1
+    }
+    Write-Host '  Building from source (Cargo.toml found)' -ForegroundColor Yellow
 }
 Set-Location $ProjectDir
 
@@ -138,6 +147,7 @@ function PrintBanner($title) {
     Write-Host '================================================================' -ForegroundColor Cyan
 }
 
+# --- Build / verify binary ---
 # --- Build / verify binary ---
 function EnsureBinary {
     if ($PrecompiledBinary) {
