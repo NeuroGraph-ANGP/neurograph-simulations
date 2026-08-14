@@ -32,17 +32,17 @@ cd neurograph-simulations
 .\RUN-TESTS-A.ps1
 ```
 
-Explore specific scenarios with custom parameters.
+> Runs nodes within a **single shard**. Use this to test individual attacker scenarios at specific step counts and percentages.
 
 | Parameter | Value |
 |:----------|:-----:|
-| Shards | 10K / 30K / 50K / 100K |
+| Shards | 1 (single) |
+| Steps | 10K / 30K / 50K / 100K |
 | Nodes | 8 |
 | Attacker | 10% to 90% |
-| Output | TPS report |
 
-| Option | Step Set | Attacker % |
-|:------:|:--------:|:----------:|
+| Option | Steps | Attacker |
+|:------:|:-----:|:--------:|
 | 1-9 | 10K | 10%-90% |
 | 11-19 | 30K | 10%-90% |
 | 21-29 | 50K | 10%-90% |
@@ -58,7 +58,7 @@ Explore specific scenarios with custom parameters.
 .\RUN-NG-BENCHMARK.ps1
 ```
 
-Reproduce the exact results from the paper.
+> Runs **multi-shard simulations** (333 shards) to reproduce the exact TPS, latency, and security metrics reported in the paper.
 
 | Parameter | Value |
 |:----------|:-----:|
