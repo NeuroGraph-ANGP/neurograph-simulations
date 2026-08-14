@@ -35,37 +35,13 @@ cd neurograph-simulations
 | **Attacker types** | 37 (T0-T36) | 37 (T0-T36) |
 | **Attacker %** | 0 to 99% | 0 to 99% |
 | **Key config** | Steps: 10K-100K | Shards: 100-444 |
+| **Options** | Security / Clean / Resistance / Quick / Batch | Clean / Attack / Scaled / Custom / Info |
 | **Purpose** | Test adversarial pressure at different intensities within one shard | Benchmark TPS, latency and security across distributed multi-shard network |
 
 ```powershell
 .\RUN-TESTS-A.ps1          # Single-shard tests
-```
-
-```powershell
 .\RUN-NG-BENCHMARK.ps1     # Multi-shard benchmark
 ```
-
----
-
-## RUN-TESTS-A.ps1 Options
-
-| Option | Category | Config |
-|:------:|:--------:|:------|
-| 1-5 | Security | 10K steps, 10%-90% attacker |
-| 6-8 | Clean | 50K-500K steps, 0% attacker |
-| 9-10 | Resistance | 100K-200K steps, 30%-35% |
-| 11-13 | Quick | 500 steps, 10%-50% |
-| 20-22 | Batch | All / Quick / Full sweep |
-
-## RUN-NG-BENCHMARK.ps1 Options
-
-| Option | Category | Config |
-|:------:|:--------:|:------|
-| 1-5 | Clean | 333-444 shards, 0% attacker |
-| 6-8 | Attack | 333 shards, 10%-50% |
-| 9-10 | Scaled | 100-200 shards, 10% |
-| 11 | Custom | Configure all parameters |
-| 99 | Info | List 37 attacker types |
 
 ---
 
