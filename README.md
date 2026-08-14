@@ -39,11 +39,6 @@ cd neurograph-simulations
 | **Options** | Security / Clean / Resistance / Quick / Batch | Clean / Attack / Scaled / Custom / Info |
 | **Purpose** | Test adversarial pressure at different intensities within one shard | Benchmark TPS, latency and security across distributed multi-shard network |
 
-```powershell
-.\RUN-TESTS-A.ps1          # Single-shard tests
-.\RUN-NG-BENCHMARK.ps1     # Multi-shard benchmark
-```
-
 ## Reproducing Paper Results
 
 > **1.** Run `.\RUN-NG-BENCHMARK.ps1` for the full multi-shard benchmark
