@@ -16,8 +16,6 @@
 ---
 </div>
 
-<br>
-
 ## Quick Start
 
 ```powershell
@@ -26,56 +24,41 @@ cd neurograph-simulations
 .\setup.ps1
 ```
 
-Then choose a test script:
+---
 
-<table width="100%">
-<tr>
-<th width="50%" align="center">
-
-### RUN-TESTS-A.ps1
-[![Type: Interactive](https://img.shields.io/badge/Type-Interactive-9b7eff?style=flat-square)]()
-
-</th>
-<th width="50%" align="center">
-
-### RUN-NG-BENCHMARK.ps1
-[![Type: Benchmark](https://img.shields.io/badge/Type-Benchmark-00d4aa?style=flat-square)]()
-
-</th>
-</tr>
-<tr>
-<td align="center" valign="top">
+## RUN-TESTS-A.ps1  ![Interactive](https://img.shields.io/badge/Type-Interactive-9b7eff?style=flat-square)
 
 ```powershell
 .\RUN-TESTS-A.ps1
 ```
 
-**Explore specific scenarios**
+Explore specific scenarios with custom parameters.
 
 | Parameter | Value |
 |:----------|:-----:|
 | Shards | 10K / 30K / 50K / 100K |
 | Nodes | 8 |
-| Attacker | 10%--90% |
+| Attacker | 10% to 90% |
 | Output | TPS report |
 
 | Option | Step Set | Attacker % |
 |:------:|:--------:|:----------:|
-| 1--9 | 10K | 10%--90% |
-| 11--19 | 30K | 10%--90% |
-| 21--29 | 50K | 10%--90% |
-| 31--39 | 100K | 10%--90% |
+| 1-9 | 10K | 10%-90% |
+| 11-19 | 30K | 10%-90% |
+| 21-29 | 50K | 10%-90% |
+| 31-39 | 100K | 10%-90% |
 | 51 | QUICK | 10% |
 | 88 | CUSTOM | any |
 
-</td>
-<td align="center" valign="top">
+---
+
+## RUN-NG-BENCHMARK.ps1  ![Benchmark](https://img.shields.io/badge/Type-Benchmark-00d4aa?style=flat-square)
 
 ```powershell
 .\RUN-NG-BENCHMARK.ps1
 ```
 
-**Reproduce paper results**
+Reproduce the exact results from the paper.
 
 | Parameter | Value |
 |:----------|:-----:|
@@ -91,11 +74,7 @@ Then choose a test script:
 | Security | Attacker success rate |
 | Integrity | DAG integrity score |
 
-</td>
-</tr>
-</table>
-
-<br>
+---
 
 ## Reproducing Paper Results
 
