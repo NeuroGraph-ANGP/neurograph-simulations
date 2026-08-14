@@ -28,8 +28,9 @@ cd neurograph-simulations
 
 ## Test Scripts
 
-| | RUN-TESTS-A.ps1 ![Single Shard](https://img.shields.io/badge/-Single_Shard-9b7eff?style=flat-square) | RUN-NG-BENCHMARK.ps1 ![Multi Shard](https://img.shields.io/badge/-Multi_Shard-00d4aa?style=flat-square) |
+| | RUN-TESTS-A.ps1 | RUN-NG-BENCHMARK.ps1 |
 |:---|:---|:---|
+| | ![Single Shard](https://img.shields.io/badge/Single_Shard-9b7eff?style=for-the-badge) | ![Multi Shard](https://img.shields.io/badge/Multi_Shard-00d4aa?style=for-the-badge) |
 | **Mode** | Single shard | Multi-shard (parallel) |
 | **Nodes** | 2664 | 2664 (333 x 8) |
 | **Attacker types** | 37 (T0-T36) | 37 (T0-T36) |
@@ -42,8 +43,6 @@ cd neurograph-simulations
 .\RUN-TESTS-A.ps1          # Single-shard tests
 .\RUN-NG-BENCHMARK.ps1     # Multi-shard benchmark
 ```
-
----
 
 ## Reproducing Paper Results
 
