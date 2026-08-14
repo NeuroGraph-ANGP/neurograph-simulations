@@ -18,7 +18,7 @@
 
 ## Quick Start
 
-**Step 1:** Open PowerShell. If this is your first time running scripts, allow them with:
+**Step 1:** Open PowerShell. If scripts are blocked, allow them:
 
 ```powershell
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
@@ -31,7 +31,7 @@ git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
 cd neurograph-simulations
 ```
 
-> No git installed? Click the green **Code** button above, then **Download ZIP**. Extract it, open PowerShell in that folder.
+> No git? Click the green **Code** button above, then **Download ZIP**. Extract it, open PowerShell in that folder.
 
 **Step 3:** Download the simulation engine (internet needed, first run only):
 
@@ -42,10 +42,11 @@ cd neurograph-simulations
 **Step 4:** Run a test:
 
 ```powershell
-.\RUN-TESTS-A.ps1
+.\RUN-TESTS-A.ps1          # Single-shard tests
+.\RUN-NG-BENCHMARK.ps1     # Multi-shard benchmark
 ```
 
-A menu appears. Type a number and press Enter. For example, type **1** for a 10% attacker test. Results are saved automatically in the results folder.
+> Each script shows a menu. Type a number and press Enter. Results are saved automatically.
 
 ---
 
