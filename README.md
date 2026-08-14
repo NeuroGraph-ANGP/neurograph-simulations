@@ -1,46 +1,89 @@
 ﻿# NeuroGraph ANGP v4.3 -- Security Simulations
 
-Reproducible security simulations for verifying the assumptions from the NeuroGraph ANGP paper.
+> Reproducible security simulations for verifying the assumptions from the NeuroGraph ANGP paper.
+
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Windows](https://img.shields.io/badge/Platform-Windows-0078D4.svg)]()
+[![PowerShell](https://img.shields.io/badge/Shell-PowerShell-5391F2.svg)]()
+[![Release](https://img.shields.io/badge/Release-v4.3.5-green.svg)](https://github.com/NeuroGraph-ANGP/neurograph-simulations/releases/latest)
+
+---
 
 ## Quick Start
 
-Open PowerShell and run:
+```powershell
+git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
+cd neurograph-simulations
+.\setup.ps1
+```
 
-    git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
-    cd neurograph-simulations
-    .\setup.ps1
-    .\RUN-TESTS-A.ps1
+Then choose a test script below.
 
-Or for the benchmark:
+---
 
-    .\RUN-NG-BENCHMARK.ps1
+## Test Scripts
 
-## Test Suite Options (RUN-TESTS-A.ps1)
+| | **RUN-TESTS-A.ps1** | **RUN-NG-BENCHMARK.ps1** |
+|---|---|---|
+| **Purpose** | Interactive test suite | Full benchmark suite |
+| **Use case** | Explore specific scenarios | Reproduce paper results |
+| **Steps** | 10K / 30K / 50K / 100K | Fixed (333s, 8 nodes) |
+| **Attacker %** | 10%--90% selectable | 20% (paper default) |
+| **Output** | Per-run TPS report | Benchmark report file |
 
-| Step Set    | Options | Attacker % |
-|-------------|---------|------------|
-| 10K STEPS   | 1-9     | 10%-90%    |
-| 30K STEPS   | 11-19   | 10%-90%    |
-| 50K STEPS   | 21-29   | 10%-90%    |
-| 100K STEPS  | 31-39   | 10%-90%    |
-| CLEAN (0%)  | 41-44   | 0%         |
-| CUSTOM      | 50      | 0-99%      |
-| QUICK       | 51-53   | presets    |
-| BATCH       | 60-64   | automated  |
-| INFO        | 99      | show info  |
-| EXIT        | 0       | exit       |
+### RUN-TESTS-A.ps1 -- Interactive Test Suite
+
+Run individual tests with custom parameters:
+
+```powershell
+.\RUN-TESTS-A.ps1
+```
+
+**Options:**
+
+| Step Set | Options | Attacker % |
+|----------|---------|------------|
+| 10K STEPS | 1--9 | 10%--90% |
+| 30K STEPS | 11--19 | 10%--90% |
+| 50K STEPS | 21--29 | 10%--90% |
+| 100K STEPS | 31--39 | 10%--90% |
+| QUICK 10% | 51 | 10% (fast) |
+| CUSTOM | 88 | Your values |
+
+### RUN-NG-BENCHMARK.ps1 -- Benchmark Suite
+
+Reproduce the exact results from the paper:
+
+```powershell
+.\RUN-NG-BENCHMARK.ps1
+```
+
+**Benchmark configuration:**
+
+| Parameter | Value |
+|-----------|-------|
+| Duration | 333 seconds |
+| Nodes | 8 |
+| Attacker % | 20% |
+| Output | benchmark-reports/TPS-*.txt |
+
+---
 
 ## Reproducing Paper Results
 
 1. Run .\RUN-NG-BENCHMARK.ps1 for the full benchmark
-2. Select individual tests from .\RUN-TESTS-A.ps1
-3. Compare your results with the paper reported values
+2. Run .\RUN-TESTS-A.ps1 to explore individual scenarios
+3. Compare your results with the paper's reported values
+
+---
 
 ## System Requirements
 
-- Windows 10/11
-- PowerShell 5.1+
-- Internet connection (first run only, for setup)
+- **OS**: Windows 10 / 11
+- **Shell**: PowerShell 5.1+
+- **Internet**: First run only (to download the binary)
+
+---
 
 ## License
 
