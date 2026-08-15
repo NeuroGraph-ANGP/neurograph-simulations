@@ -289,7 +289,7 @@ while ($true) {
 
     $SHARD_IPS = @()
     for ($idx = 0; $idx -lt $NUM_SHARDS; $idx++) {
-        $oct3 = [math]::Floor($idx / 254) + 1
+        $oct3 = [m[Math]::Floor($idx / 254) + 1
         $oct4 = ($idx % 254) + 1
         $port = 8100 + $idx
         $SHARD_IPS += ('10.0.{0}.{1}:{2}' -f $oct3, $oct4, $port)
@@ -298,7 +298,7 @@ while ($true) {
     $allReportLines = @()
 
     try {
-        $batchCount = [math]::Ceiling($NUM_SHARDS / $BATCH_SIZE)
+        $batchCount = [m[Math]::Ceiling($NUM_SHARDS / $BATCH_SIZE)
         $totalNodes = $NUM_SHARDS * $NODES
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
@@ -406,7 +406,7 @@ while ($true) {
                 $sw = [System.Diagnostics.Stopwatch]::StartNew()
                 while (-not $proc.HasExited) {
                     if ($sw.Elapsed.TotalSeconds -ge 5) {
-                        $sec = [math]::Floor($sw.Elapsed.TotalSeconds)
+                        $sec = [m[Math]::Floor($sw.Elapsed.TotalSeconds)
                         Write-Host ("`r    shard {0}: {1}s" -f $sid, $sec) -NoNewline -ForegroundColor DarkGray
                     }
                     Start-Sleep -Milliseconds 500
@@ -675,5 +675,6 @@ while ($true) {
     Write-Host '  -----------------------------------------------------------' -ForegroundColor DarkGray
     Start-Sleep -Seconds 1
 } # end while ($true)
+
 
 
