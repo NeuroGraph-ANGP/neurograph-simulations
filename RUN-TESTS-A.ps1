@@ -75,7 +75,7 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
 $exeExt = if ($isWindows) { '.exe' } else { '' }
 $sep = if ($isWindows) { '\' } else { '/' }
 
-$ResultsDir = Join-Path $ProjectDir 'tests\results-a'
+$ResultsDir = Join-Path $PSScriptRoot 'tests\results-a'
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
 $Timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $LogFile = "$ResultsDir\test-suite-a-$Timestamp.log"
@@ -140,16 +140,15 @@ function PrintBanner($title) {
 
 # --- Build / verify binary ---
 function EnsureBinary {
-    $binary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
+    $binary = Join-Path $EngineDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
     if (-not (Test-Path $binary)) {
+        LogInfo ('Binary not found: {0}' -f $binary)
         LogInfo 'Building sim_stress_v43ext...'
-        Set-Location $ProjectDir
+        Push-Location $EngineDir
         cargo build --release --example sim_stress_v43ext 2>&1 | Tee-Object -FilePath $LogFile -Append
-        if ($LASTEXITCODE -ne 0) {
-            LogError 'Build FAILED!'
-            exit 1
-        }
-        LogSuccess 'Build completed successfully!'
+        Pop-Location
+        if ($LASTEXITCODE -ne 0) { LogError 'Build FAILED!'; exit 1 }
+        LogSuccess 'Build completed!'
     }
     return $binary
 }
@@ -501,3 +500,4 @@ while ($true) {
     Write-Host ''
     Read-Host 'Press Enter to continue...'
 }
+
