@@ -579,7 +579,6 @@ while ($true) {
         Log-Report '  |                                                             |'
         Log-Report ('  | AGGREGATE TPS (wall-clock):     {0,12:N0} TPS                  |' -f $aggTpsWall)
         Log-Report '  |                                                             |'
-        Log-Report ('  | AGGREGATE TPS (full parallel):  {0,12:N0} TPS                  |' -f $aggTpsFullPar)
         Log-Report ('  |   ({0} shards on {1}+ cores simultaneous)' -f $NUM_SHARDS, $coreCount)
         Log-Report '  |                                                             |'
         Log-Report ('  | Scaling factor:                 {0,12:N0} x                    |' -f $NUM_SHARDS)
@@ -676,4 +675,5 @@ while ($true) {
     Write-Host '  -----------------------------------------------------------' -ForegroundColor DarkGray
     Start-Sleep -Seconds 1
 } # end while ($true)
+
 
