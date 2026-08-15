@@ -1,4 +1,4 @@
-﻿#=============================================================================
+#=============================================================================
 # NeuroGraph ANGP v4.3-EXT -- TEST SUITE A
 # 2664 Nodes | 37 Attacker Types (T0-T36) | Behavioral Strategies
 # PowerShell -- 4 step sets (10K/30K/50K/100K) x 9 attack levels
@@ -60,7 +60,7 @@ if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
         $ProjectDir = $parent
     }
 }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3-ext' }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'C:\Users\totha\neurograph-engine' }
 if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
     Write-Host '  CRITICAL ERROR: Cargo.toml not found!' -ForegroundColor Red
     Write-Host '  Run this script FROM the project folder (where Cargo.toml is)' -ForegroundColor Yellow
