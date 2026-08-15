@@ -2,7 +2,7 @@
 
 # NeuroGraph ANGP v4.3
 
-### Security Simulations
+### Security an Scalability Simulations
 
 <i>Reproducible simulations for verifying assumptions from the ANGP paper</i>
 
@@ -62,3 +62,4 @@ cd neurograph-simulations
 The ANGP engine binary is provided for verification purposes only.
 
 </div>
+
