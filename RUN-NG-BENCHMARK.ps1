@@ -1,11 +1,27 @@
-﻿# ==========================================================================
-# NeuroGraph ANGP v4.3-EXT -- INTERACTIVE MULTI-SHARD TPS BENCHMARK
 # ==========================================================================
-# Config: 333 shards x 8 nodes/shard = 2664 nodes (optimal)
-# Results saved automatically in benchmark-reports/
-# Batch processing: 4 shards parallel x 2 Rayon threads/shard
+# NeuroGraph ANGP v4.3-EXT — INTERACTIVE MULTI-SHARD TPS BENCHMARK
+# ==========================================================================
+# Menu: clean (0% atk) or with attackers (10-90%).
+# Config v4.3-EXT: 333 shards x 8 nodes/shard = 2664 nodes (optimal).
+# Results saved automatically to benchmark-reports/.
+# Optimized batch processing with RAYON_NUM_THREADS=2 per shard.
 #
-# 37 Attacker Types (T0-T36) -- Behavioral Strategies:
+# v4.3-EXT-patched (2026-08-15):
+#   [FIX 1] "Scaling factor" - now computed as aggTpsWall/avgTps (was hardcoded N).
+#   [FIX 2] "Avg per shard (wall)" - now real arithmetic mean of per-shard Total
+#           time parsed from shard logs (was wallTime/N, contradicting min/max).
+#   [FIX 3] "Rejected" - split into "Honest tx rejected" + "Total attacks blocked"
+#           (DS + theft rejections were silently excluded before).
+#   [FIX 4] Extrapolation - separated into Aggregate (theoretical, linear)
+#           and Wall-clock (hardware-limited, must be measured).
+#           Redundant block hidden when NUM_SHARDS >= 333.
+#   [FIX 8] Parallel efficiency formula fixed (was misleading, >100% values).
+#           Now: ideal_batch_wall / actual_wall_time * 100 (always <= 100%).
+#   [FIX 5] Added per-shard timing collection (sumShardTime, mean, stddev).
+#   [FIX 6] Clarified fee explanation: tf includes system reward txs (0.1% fee
+#           per batch becomes a Transaction in ledger, see ledger.add_batch).
+#
+# v4.3-EXT — 37 attacker types (T0-T36) (behavioral strategies):
 #   T0  Random                T13 Rep-Farmer             T26 AntiCoordination
 #   T1  Mimicry300            T14 Oscillating-Drift      T27 RepCamouflage
 #   T2  Mimicry500            T15 Colluding-Committee    T28 LongPoison
@@ -23,194 +39,219 @@
 # USAGE:
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #   .\RUN-NG-BENCHMARK.ps1
-#
-#   IMPORTANT: Run as a FILE (.\RUN-NG-BENCHMARK.ps1), do NOT paste into
-#   the console -- the try/catch inside while-loop breaks the interactive parser.
 # ==========================================================================
 
-# --- Self-elevate execution policy (avoids "not digitally signed" error) ---
-if ($PSVersionTable.PSVersion.Major -ge 5) {
-    $currentPolicy = Get-ExecutionPolicy -Scope Process -ErrorAction SilentlyContinue
-    if ($currentPolicy -eq 'Restricted' -or $currentPolicy -eq 'AllSigned') {
-        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue
-    }
-}
-
 $ErrorActionPreference = 'Continue'
-
-# --- Cross-platform chcp (Windows-only) ---
-$isWindows = $true
-if ($PSVersionTable.PSVersion.Major -ge 6) {
-    $isWindows = -not $IsLinux -and -not $IsMacOS
-}
-if ($isWindows) {
-    chcp 65001 > $null 2>&1
-    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-}
+chcp 65001 > $null 2>&1
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ===================== PRE-BUILD =====================
 $originalPath = Get-Location
 
 $ProjectDir = (Get-Location).Path
-# --- Pre-compiled binary detection ---
-$PrecompiledBinary = $null
-$preBin = Join-Path $PSScriptRoot "bin\sim_stress_v43ext.exe"
-if (Test-Path $preBin) {
-    $PrecompiledBinary = $preBin
-    Write-Host "[SETUP] Pre-compiled binary found: $preBin" -ForegroundColor Green
-    $ProjectDir = $PSScriptRoot
-} else {
-    # Fallback: find project root via Cargo.toml
-    $current = $PSScriptRoot
-    while ($current -and -not (Test-Path (Join-Path $current "Cargo.toml"))) {
-        $current = Split-Path $current -Parent
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = $PSScriptRoot }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
+    $dir = (Get-Location).Path
+    for ($k = 0; $k -lt 5; $k++) {
+        if (Test-Path "$dir\Cargo.toml") { $ProjectDir = $dir; break }
+        $parent = Split-Path $dir -Parent
+        if ($parent -eq $dir) { break }
+        $dir = $parent
     }
-    if (-not $current -or -not (Test-Path (Join-Path $current "Cargo.toml"))) {
-        Write-Host "CRITICAL ERROR: No pre-compiled binary and Cargo.toml not found!" -ForegroundColor Red
-        Write-Host "Run setup.ps1 first to download the binary." -ForegroundColor Yellow
-        exit 1
-    }
-    $ProjectDir = $current
-    Write-Host "[SETUP] Using source build from: $ProjectDir" -ForegroundColor Cyan
 }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3.2' }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
+    Write-Host '  CRITICAL ERROR: Cargo.toml not found!' -ForegroundColor Red
+    Write-Host '  Run this script FROM the project folder (where Cargo.toml is located)' -ForegroundColor Yellow
+    Read-Host 'Press ENTER'; exit 1
+}
+Set-Location $ProjectDir
 
+$isWindows = $true
+$isLinux = $false
+$isMacOS = $false
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    # PowerShell 7+ provides $IsLinux, $IsMacOS, $IsWindows automatically
+    $isWindows = $IsWindows
+    $isLinux = $IsLinux
+    $isMacOS = $IsMacOS
+}
 $exeExt = if ($isWindows) { '.exe' } else { '' }
 $sep = if ($isWindows) { '\' } else { '/' }
 
-# --- CPU physical core detection (PS 5.1 compatible) ---
+# Cross-platform CPU core detection (Windows / Linux / macOS / GitHub Actions runners)
 $coreCount = $null
-try {
-    $cpus = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue
-    if ($cpus) { $coreCount = ($cpus | Measure-Object -Property NumberOfCores -Sum).Sum }
-} catch {}
-if (-not $coreCount) { $coreCount = $env:NUMBER_OF_PROCESSORS }
-if (-not $coreCount) { $coreCount = '?' }
-$osName = if ($isWindows) { 'Windows' } else { 'Linux/macOS' }
+$osName = if ($isWindows) { 'Windows' } elseif ($isMacOS) { 'macOS' } else { 'Linux' }
 
-if ($PrecompiledBinary) {
-    $simBinary = $PrecompiledBinary
-    Write-Host "[BUILD] Using pre-compiled binary: $simBinary" -ForegroundColor Green
-} else {
-    Write-Host "[BUILD] Compiling from source..." -ForegroundColor Cyan
-    Push-Location $ProjectDir
+if ($isWindows) {
+    # Windows: query WMI/CIM for physical cores (sums across all sockets)
     try {
-        cargo build --release --example sim_stress_v43ext 2>&1 | ForEach-Object { Write-Host $_ }
-        if ($LASTEXITCODE -ne 0) { throw "cargo build failed with exit code $LASTEXITCODE" }
-    } finally {
-        Pop-Location
+        $cpuInfo = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue
+        if ($cpuInfo) {
+            $coreCount = ($cpuInfo | Measure-Object -Property NumberOfCores -Sum).Sum
+        }
+    } catch {}
+    if (-not $coreCount) { $coreCount = $env:NUMBER_OF_PROCESSORS }
+} elseif ($isMacOS) {
+    # macOS: sysctl hw.physicalcpu (physical cores) or hw.logicalcpu (with HT)
+    try {
+        $sysctlOut = & sysctl -n hw.physicalcpu 2>$null
+        if ($sysctlOut -and $sysctlOut -match '^\d+$') {
+            $coreCount = [int]$sysctlOut.Trim()
+        }
+    } catch {}
+    if (-not $coreCount) {
+        try {
+            $sysctlOut = & sysctl -n hw.logicalcpu 2>$null
+            if ($sysctlOut -and $sysctlOut -match '^\d+$') {
+                $coreCount = [int]$sysctlOut.Trim()
+            }
+        } catch {}
     }
-    $sep = [System.IO.Path]::DirectorySeparatorChar
-    $exeExt = if ($IsWindows -or $env:OS -match "Windows") { ".exe" } else { "" }
-    $simBinary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
-    if (-not (Test-Path $simBinary)) {
-        Write-Host "CRITICAL ERROR: Binary not found at $simBinary" -ForegroundColor Red
-        exit 1
+} else {
+    # Linux: try nproc first (works on most distros + GitHub Actions runners)
+    try {
+        $nprocOut = & nproc 2>$null
+        if ($nprocOut -and $nprocOut -match '^\d+$') {
+            $coreCount = [int]$nprocOut.Trim()
+        }
+    } catch {}
+    # Fallback 1: parse /proc/cpuinfo (count "processor" entries)
+    if (-not $coreCount -and (Test-Path '/proc/cpuinfo')) {
+        try {
+            $cpuInfoContent = Get-Content '/proc/cpuinfo' -ErrorAction SilentlyContinue
+            if ($cpuInfoContent) {
+                $coreCount = ($cpuInfoContent | Where-Object { $_ -match '^processor\s*:' }).Count
+            }
+        } catch {}
     }
-    Write-Host "[BUILD] Compiled: $simBinary" -ForegroundColor Green
+    # Fallback 2: lscpu (preferred on modern Linux)
+    if (-not $coreCount) {
+        try {
+            $lscpuOut = & lscpu -p=CPU 2>$null
+            if ($lscpuOut) {
+                $cpuLines = $lscpuOut | Where-Object { $_ -match '^\d+' }
+                if ($cpuLines) { $coreCount = $cpuLines.Count }
+            }
+        } catch {}
+    }
+    # Fallback 3: NUMBER_OF_PROCESSORS env (some CI runners set it)
+    if (-not $coreCount) { $coreCount = $env:NUMBER_OF_PROCESSORS }
 }
 
+if (-not $coreCount) { $coreCount = '?' }
+
+Write-Host ''
+Write-Host '=============================================================' -ForegroundColor Cyan
+Write-Host '  NeuroGraph ANGP v4.3-EXT — BUILD sim_stress_v43ext...' -ForegroundColor Cyan
+Write-Host '  37 attacker types (T0-T36) | Behavioral Strategies' -ForegroundColor Gray
+Write-Host '=============================================================' -ForegroundColor Cyan
+Write-Host ''
+Write-Host ("  Project: {0}" -f $ProjectDir) -ForegroundColor Gray
+Write-Host ("  CPU: {0} cores  |  OS: {1}" -f $coreCount, $osName) -ForegroundColor Gray
+Write-Host ''
+cargo build --release --example sim_stress_v43ext 2>&1 | ForEach-Object { Write-Host ("  {0}" -f $_) }
+if ($LASTEXITCODE -ne 0) {
+    Write-Host ''
+    Write-Host '  Build FAILED!' -ForegroundColor Red
+    Read-Host 'Press ENTER'; exit 1
+}
+$simBinary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
+Write-Host ''
+Write-Host ('  Binary: {0}' -f $simBinary) -ForegroundColor Green
+Write-Host '  Build OK!' -ForegroundColor Green
+Write-Host ''
 # ===================== PRESETS =====================
-# All presets use 10,000 steps by default
 $presets = @{
     # --- CLEAN (0% attackers) ---
-    '1'  = @{ Shards=333; Nodes=8;  Percent=0;  Steps=10000 }
-    '2'  = @{ Shards=100; Nodes=8;  Percent=0;  Steps=10000 }
-    '3'  = @{ Shards=200; Nodes=8;  Percent=0;  Steps=10000 }
-    '4'  = @{ Shards=444; Nodes=8;  Percent=0;  Steps=10000 }
-    '5'  = @{ Shards=222; Nodes=8;  Percent=0;  Steps=10000 }
+    '1'  = @{ Shards=333; Nodes=8;  Percent=0  }
+    '2'  = @{ Shards=100; Nodes=8;  Percent=0  }
+    '3'  = @{ Shards=200; Nodes=8;  Percent=0  }
+    '4'  = @{ Shards=444; Nodes=8;  Percent=0  }
+    '5'  = @{ Shards=222; Nodes=8;  Percent=0  }
     # --- WITH ATTACKERS ---
-    '6'  = @{ Shards=333; Nodes=8;  Percent=10; Steps=10000 }
-    '7'  = @{ Shards=333; Nodes=8;  Percent=30; Steps=10000 }
-    '8'  = @{ Shards=333; Nodes=8;  Percent=50; Steps=10000 }
-    '9'  = @{ Shards=100; Nodes=8;  Percent=10; Steps=10000 }
-    '10' = @{ Shards=200; Nodes=8;  Percent=10; Steps=10000 }
+    '6'  = @{ Shards=333; Nodes=8;  Percent=10 }
+    '7'  = @{ Shards=333; Nodes=8;  Percent=30 }
+    '8'  = @{ Shards=333; Nodes=8;  Percent=50 }
+    '9'  = @{ Shards=100; Nodes=8;  Percent=10 }
+    '10' = @{ Shards=200; Nodes=8; Percent=10 }
 }
 
 $reportDir = Join-Path $ProjectDir 'benchmark-reports'
 if (-not (Test-Path $reportDir)) { New-Item -ItemType Directory -Path $reportDir | Out-Null }
 
-# ===================== ATTACKER TYPE DEFINITIONS =====================
+# ===================== ATTACKER TYPES LIST =====================
+# Each entry: Id, Name, Strategy, Category, Difficulty
+# Full table displayed when user selects menu option [99]
 $attackerTypes = @(
-    @{ Id='T0';  Name='Random';                Desc='Submits random proposals; no strategy, pure noise' },
-    @{ Id='T1';  Name='Mimicry300';            Desc='Copies top-300 honest nodes'' predictions with slight drift' },
-    @{ Id='T2';  Name='Mimicry500';            Desc='Copies top-500 honest nodes'' predictions with slight drift' },
-    @{ Id='T3';  Name='Adaptive-RepAware';     Desc='Adapts behavior based on reputation scores of neighbors' },
-    @{ Id='T4';  Name='Coordinated-Bias';      Desc='Multiple nodes coordinate to bias consensus in one direction' },
-    @{ Id='T5';  Name='Gaussian';              Desc='Generates proposals from a Gaussian distribution centered off-consensus' },
-    @{ Id='T6';  Name='FlipFlop';              Desc='Alternates between honest and malicious behavior each step' },
-    @{ Id='T7';  Name='Sleeper';               Desc='Acts honestly for N steps, then switches to attack mode' },
-    @{ Id='T8';  Name='Progressive-Drift';     Desc='Gradually drifts predictions away from consensus over time' },
-    @{ Id='T9';  Name='Outlier-Burst';         Desc='Sends burst of extreme outlier proposals at intervals' },
-    @{ Id='T10'; Name='Clone-Copy';            Desc='Copies another node''s proposal exactly (identity theft)' },
-    @{ Id='T11'; Name='Byzantine';             Desc='Classic BFT: sends different values to different peers' },
-    @{ Id='T12'; Name='Sybil-Cluster';         Desc='Creates multiple fake identities that reinforce each other' },
-    @{ Id='T13'; Name='Rep-Farmer';            Desc='Exploits reputation system to inflate own score artificially' },
-    @{ Id='T14'; Name='Oscillating-Drift';     Desc='Oscillates predictions sinusoidally around consensus median' },
-    @{ Id='T15'; Name='Colluding-Committee';   Desc='Group of nodes collude to control a VRF committee selection' },
-    @{ Id='T16'; Name='SlowPoison';            Desc='Subtly shifts consensus over many steps; nearly undetectable' },
-    @{ Id='T17'; Name='Eclipse';               Desc='Isolates a target node by surrounding it with attacker peers' },
-    @{ Id='T18'; Name='MajRefManip';           Desc='Manipulates majority reference to shift finalization choices' },
-    @{ Id='T19'; Name='SybilReplace';          Desc='Replaces honest nodes'' identities with Sybil copies over time' },
-    @{ Id='T20'; Name='PatientByz';            Desc='Waits for critical round then executes Byzantine attack' },
-    @{ Id='T21'; Name='ThresholdGamer';        Desc='Stays just below detection threshold while maximizing damage' },
-    @{ Id='T22'; Name='TrueFeedbackAdapt';     Desc='Uses feedback from detection system to evade it adaptively' },
-    @{ Id='T23'; Name='RepGradient';           Desc='Climbs reputation gradient to maximize influence on consensus' },
-    @{ Id='T24'; Name='DetectorMimicry';       Desc='Mimics the behavior of the detection algorithm to avoid flags' },
-    @{ Id='T25'; Name='DistribInfluence';      Desc='Distributes attack influence across many small manipulations' },
-    @{ Id='T26'; Name='AntiCoordination';      Desc='Prevents honest nodes from coordinating by disrupting signals' },
-    @{ Id='T27'; Name='RepCamouflage';         Desc='Maintains high reputation while occasionally injecting attacks' },
-    @{ Id='T28'; Name='LongPoison';            Desc='Slow poisoning over extended horizon (1000+ steps) before striking' },
-    @{ Id='T29'; Name='HonestMalSwitch';       Desc='Switches between honest and malicious based on network conditions' },
-    @{ Id='T30'; Name='ThrBoundary';           Desc='Operates exactly at detection threshold boundary to maximize evasion' },
-    @{ Id='T31'; Name='RecoveryExploit';       Desc='Exploits recovery mechanisms after a crash to inject bad state' },
-    @{ Id='T32'; Name='SybilCycling';          Desc='Cycles through Sybil identities to avoid long-term detection' },
-    @{ Id='T33'; Name='ColludHonestMaj';       Desc='Colludes while appearing as honest majority to observers' },
-    @{ Id='T34'; Name='ConsensusTarget';       Desc='Targets specific consensus rounds to maximize finalization impact' },
-    @{ Id='T35'; Name='MultiVectorBoss';       Desc='Combines multiple attack vectors simultaneously for maximum damage' },
-    @{ Id='T36'; Name='WorstCaseCoord';        Desc='Worst-case coordinated attack: all attackers act in perfect sync' }
+    @{ Id='T0'; Name='Random-Noise'; Strategy='Uniform [-4, +4] perturbation'; Category='Disruption'; Difficulty='Low' },
+    @{ Id='T1'; Name='Mimicry-300'; Strategy='300 mimicry steps, then noise (sigma=0.8)'; Category='Evasion'; Difficulty='Medium' },
+    @{ Id='T2'; Name='Mimicry-500'; Strategy='500 honest steps, then noise (sigma=1.2)'; Category='Evasion'; Difficulty='Medium' },
+    @{ Id='T3'; Name='Adaptive-Rep-Aware'; Strategy='40% attack / 5% recovery ratio'; Category='Adaptive'; Difficulty='High' },
+    @{ Id='T4'; Name='Coordinated-Bias'; Strategy='All give same bias +0.25'; Category='Coordination'; Difficulty='Medium' },
+    @{ Id='T5'; Name='Gaussian'; Strategy='Gaussian noise N(0, 2.0)'; Category='Disruption'; Difficulty='Low' },
+    @{ Id='T6'; Name='FlipFlop'; Strategy='100 honest / 100 attack cycles'; Category='Oscillation'; Difficulty='Medium' },
+    @{ Id='T7'; Name='Sleeper'; Strategy='2000 honest steps, then drift'; Category='Stealth'; Difficulty='High' },
+    @{ Id='T8'; Name='Progressive-Drift'; Strategy='+0.0002/step degradation'; Category='Slow Attack'; Difficulty='Very High' },
+    @{ Id='T9'; Name='Outlier-Burst'; Strategy='95% honest, 5% outlier +/-5'; Category='Burst'; Difficulty='Medium' },
+    @{ Id='T10'; Name='Clone-Copy'; Strategy='Copy honest prediction + micro-noise'; Category='Impersonation'; Difficulty='Medium' },
+    @{ Id='T11'; Name='Byzantine'; Strategy='Per-dimension random chaos'; Category='Byzantine'; Difficulty='Low' },
+    @{ Id='T12'; Name='Sybil-Cluster'; Strategy='5 identities, coordinated bias 0.03'; Category='Sybil'; Difficulty='High' },
+    @{ Id='T13'; Name='Rep-Farmer'; Strategy='Farm reputation for 5K steps, then attack'; Category='Exploitation'; Difficulty='Very High' },
+    @{ Id='T14'; Name='Oscillating-Drift'; Strategy='Sinusoidal drift pattern'; Category='Oscillation'; Difficulty='High' },
+    @{ Id='T15'; Name='Colluding-Committee'; Strategy='20 nodes coordinate together'; Category='Coordination'; Difficulty='High' },
+    @{ Id='T16'; Name='Slow-Poison'; Strategy='99.9% valid, 0.1% wrong predictions'; Category='Subversion'; Difficulty='Very High' },
+    @{ Id='T17'; Name='Eclipse'; Strategy='Control victim''s neighbors'; Category='Topology'; Difficulty='Extreme' },
+    @{ Id='T18'; Name='Maj-Ref-Manip'; Strategy='60% same bias +0.01'; Category='Manipulation'; Difficulty='Very High' },
+    @{ Id='T19'; Name='Sybil-Replace'; Strategy='Eliminated -> new identity, reputation reset'; Category='Sybil'; Difficulty='Extreme' },
+    @{ Id='T20'; Name='Patient-Byz'; Strategy='5000 perfect honest steps, then full attack'; Category='Stealth'; Difficulty='Extreme' },
+    @{ Id='T21'; Name='Threshold-Gamer'; Strategy='Stay below all detection thresholds'; Category='Evasion'; Difficulty='Extreme' },
+    @{ Id='T22'; Name='True-Fdbk-Adaptive'; Strategy='Observe own reputation, self-adjust'; Category='Adaptive'; Difficulty='Extreme' },
+    @{ Id='T23'; Name='Rep-Gradient'; Strategy='Learn reputation function via probing'; Category='Modeling'; Difficulty='Extreme' },
+    @{ Id='T24'; Name='Detector-Mimicry'; Strategy='Mimic honest mean/variance/model'; Category='Evasion'; Difficulty='Extreme' },
+    @{ Id='T25'; Name='Distrib-Influence'; Strategy='100 nodes x small bias, collective push'; Category='Coordination'; Difficulty='Very High' },
+    @{ Id='T26'; Name='Anti-Coordination'; Strategy='Same goal, different predictions'; Category='Evasion'; Difficulty='Very High' },
+    @{ Id='T27'; Name='Rep-Camouflage'; Strategy='Excellent/attack cycles, aggregate management'; Category='Oscillation'; Difficulty='Extreme' },
+    @{ Id='T28'; Name='Long-Poison'; Strategy='0.1% wrong over 5K/6K/7K steps'; Category='Subversion'; Difficulty='Extreme' },
+    @{ Id='T29'; Name='Honest-Mal-Switch'; Strategy='Random mode switches, no periodic pattern'; Category='Unpredictable'; Difficulty='Extreme' },
+    @{ Id='T30'; Name='Thr-Boundary'; Strategy='Live at threshold -eps, dynamic eps'; Category='Evasion'; Difficulty='Extreme' },
+    @{ Id='T31'; Name='Recovery-Exploit'; Strategy='Attack -> recover -> attack cycles'; Category='Exploitation'; Difficulty='Extreme' },
+    @{ Id='T32'; Name='Sybil-Cycling'; Strategy='Cycle through identities, transfer behavior'; Category='Sybil'; Difficulty='Extreme' },
+    @{ Id='T33'; Name='Collud-Honest-Maj'; Strategy='30% attack: 10% aggressive + 20% camouflage'; Category='Coordination'; Difficulty='Extreme' },
+    @{ Id='T34'; Name='Consensus-Targeted'; Strategy='Optimize [C_attack - C_honest]'; Category='Manipulation'; Difficulty='Extreme' },
+    @{ Id='T35'; Name='Multi-Vector (BOSS)'; Strategy='Dynamically select best strategy'; Category='Adaptive'; Difficulty='Extreme' },
+    @{ Id='T36'; Name='Worst-Case-Coordinated'; Strategy='Perfect coordination, diverse predictions'; Category='Coordination'; Difficulty='Extreme' }
 )
-
-# ===================== HELPER FUNCTIONS =====================
-function Log-Report($txt, [string]$Color) {
-    if ($Color) {
-        Write-Host $txt -ForegroundColor $Color
-    } else {
-        Write-Host $txt
-    }
-    $script:allReportLines += $txt
-}
-
 # ===================== MAIN MENU (LOOP) =====================
 
 while ($true) {
 
     Write-Host ''
     Write-Host '=============================================================' -ForegroundColor Cyan
-    Write-Host '  NeuroGraph ANGP v4.3-EXT -- MULTI-SHARD TPS BENCHMARK' -ForegroundColor Cyan
-    Write-Host '  333 shards x 8 nodes/shard = 2664 nodes (optimal)' -ForegroundColor Gray
-    Write-Host '  37 Attacker Types (T0-T36) | Behavioral Strategies' -ForegroundColor Gray
-    Write-Host '  Batch 4 shards x 2 Rayon threads/shard = 8 threads/batch' -ForegroundColor DarkCyan
+    Write-Host '  NeuroGraph ANGP v4.3-EXT — MULTI-SHARD TPS BENCHMARK' -ForegroundColor Cyan
+    Write-Host '  333 shards x 8 nodes/shard = 2664 nodes (optimal config)' -ForegroundColor Gray
+    Write-Host '  37 attacker types (T0-T36) | Behavioral Strategies' -ForegroundColor Gray
     Write-Host '=============================================================' -ForegroundColor Cyan
     Write-Host ''
     Write-Host '  CLEAN (no attackers, 0%)' -ForegroundColor Green
-    Write-Host '    [1]  333 shards x 8 nodes/shard   (2664 total, 10K steps) -- OPTIMAL' -ForegroundColor White
-    Write-Host '    [2]  100 shards x 8 nodes/shard   (800 total,  10K steps)' -ForegroundColor White
-    Write-Host '    [3]  200 shards x 8 nodes/shard   (1600 total, 10K steps)' -ForegroundColor White
-    Write-Host '    [4]  444 shards x 8 nodes/shard   (3552 total, 10K steps)' -ForegroundColor White
-    Write-Host '    [5]  222 shards x 8 nodes/shard   (1776 total, 10K steps)' -ForegroundColor White
+    Write-Host '    [1]  333 shards x 8 nodes/shard   (2664 total) — OPTIM v4.3-EXT' -ForegroundColor White
+    Write-Host '    [2]  100 shards x 8 nodes/shard   (800 total)' -ForegroundColor White
+    Write-Host '    [3]  200 shards x 8 nodes/shard   (1600 total)' -ForegroundColor White
+    Write-Host '    [4]  444 shards x 8 nodes/shard   (3552 total)' -ForegroundColor White
+    Write-Host '    [5]  222 shards x 8 nodes/shard   (1776 total)' -ForegroundColor White
     Write-Host ''
-    Write-Host '  WITH ATTACKERS (37 types T0-T36)' -ForegroundColor Red
-    Write-Host '    [6]  333 shards x 8 nodes/shard   (2664 total, 10% atk, 10K steps)' -ForegroundColor White
-    Write-Host '    [7]  333 shards x 8 nodes/shard   (2664 total, 30% atk, 10K steps)' -ForegroundColor White
-    Write-Host '    [8]  333 shards x 8 nodes/shard   (2664 total, 50% atk, 10K steps)' -ForegroundColor White
-    Write-Host '    [9]  100 shards x 8 nodes/shard   (800 total,  10% atk, 10K steps)' -ForegroundColor White
-    Write-Host '   [10]  200 shards x 8 nodes/shard  (1600 total, 10% atk, 10K steps)' -ForegroundColor White
+    Write-Host '  WITH ATTACKERS (37 attacker types T0-T36)' -ForegroundColor Red
+    Write-Host '    [6]  333 shards x 8 nodes/shard   (2664 total, 10% atk)' -ForegroundColor White
+    Write-Host '    [7]  333 shards x 8 nodes/shard   (2664 total, 30% atk)' -ForegroundColor White
+    Write-Host '    [8]  333 shards x 8 nodes/shard   (2664 total, 50% atk)' -ForegroundColor White
+    Write-Host '    [9]  100 shards x 8 nodes/shard   (800 total, 10% atk)' -ForegroundColor White
+    Write-Host '   [10]  200 shards x 8 nodes/shard  (1600 total, 10% atk)' -ForegroundColor White
     Write-Host ''
-    Write-Host '    [11] Custom (configure everything manually)' -ForegroundColor Yellow
-    Write-Host '   [99] List all 37 attacker types with descriptions' -ForegroundColor DarkCyan
+    Write-Host '    [11] Custom (manual configuration)' -ForegroundColor Yellow
+    Write-Host '   [99] List all 37 attacker types (T0-T36)' -ForegroundColor DarkCyan
     Write-Host '    [0]  Exit' -ForegroundColor DarkGray
     Write-Host ''
-    $choice = Read-Host '  Option'
+    $choice = Read-Host '  Choice'
 
     # ---- EXIT ----
     if ($choice -eq '0') {
@@ -219,32 +260,39 @@ while ($true) {
         Set-Location $originalPath
         exit 0
     }
-    # ---- LIST ATTACKER TYPES (detailed, English) ----
+    # ---- ATTACKER LIST (full table) ----
     if ($choice -eq '99') {
         Write-Host ''
-        Write-Host '  ============================================================' -ForegroundColor Cyan
-        Write-Host '  37 Attacker Types (T0-T36) -- Behavioral Strategies' -ForegroundColor Cyan
-        Write-Host '  ============================================================' -ForegroundColor Cyan
+        Write-Host '  ============================================================================================' -ForegroundColor Cyan
+        Write-Host '  NeuroGraph ANGP v4.3-EXT  -  37 ATTACKER TYPES (T0-T36)  -  BEHAVIORAL STRATEGIES' -ForegroundColor Cyan
+        Write-Host '  ============================================================================================' -ForegroundColor Cyan
         Write-Host ''
-        Write-Host '  FOUNDATION (T0-T15) -- 16 base strategies:' -ForegroundColor Yellow
-        for ($ai = 0; $ai -lt 16; $ai++) {
-            $at = $attackerTypes[$ai]
-            Write-Host ("    {0,-4} {1,-24} {2}" -f $at.Id, $at.Name, $at.Desc) -ForegroundColor White
+        Write-Host '  Categories: Disruption | Evasion | Adaptive | Coordination | Oscillation | Stealth' -ForegroundColor Gray
+        Write-Host '              Slow Attack | Burst | Impersonation | Byzantine | Sybil | Exploitation' -ForegroundColor Gray
+        Write-Host '              Subversion | Topology | Manipulation | Modeling | Unpredictable' -ForegroundColor Gray
+        Write-Host ''
+        Write-Host '  Difficulty: Low (green) | Medium (cyan) | High (yellow) | Very High (dark yellow) | Extreme (red)' -ForegroundColor Gray
+        Write-Host ''
+        Write-Host ('  {0,-5} {1,-23} {2,-45} {3,-15} {4}' -f 'ID', 'Name', 'Strategy', 'Category', 'Difficulty') -ForegroundColor White
+        Write-Host ('  {0,-5} {1,-23} {2,-45} {3,-15} {4}' -f '-----', '-----------------------', '---------------------------------------------', '---------------', '----------') -ForegroundColor DarkGray
+        foreach ($at in $attackerTypes) {
+            $dc = switch ($at.Difficulty) {
+                'Low' { 'Green' }
+                'Medium' { 'Cyan' }
+                'High' { 'Yellow' }
+                'Very High' { 'DarkYellow' }
+                'Extreme' { 'Red' }
+                default { 'White' }
+            }
+            $line = '  {0,-5} {1,-23} {2,-45} {3,-15} {4}' -f $at.Id, $at.Name, $at.Strategy, $at.Category, $at.Difficulty
+            Write-Host $line -ForegroundColor $dc
         }
         Write-Host ''
-        Write-Host '  EXTENSION-1 (T16-T21) -- 6 advanced strategies:' -ForegroundColor Yellow
-        for ($ai = 16; $ai -lt 22; $ai++) {
-            $at = $attackerTypes[$ai]
-            Write-Host ("    {0,-4} {1,-24} {2}" -f $at.Id, $at.Name, $at.Desc) -ForegroundColor White
-        }
+        Write-Host ('  Total: {0} attacker types (T0-T36)' -f $attackerTypes.Count) -ForegroundColor Green
         Write-Host ''
-        Write-Host '  EXTENSION-2 (T22-T36) -- 15 advanced strategies:' -ForegroundColor Yellow
-        for ($ai = 22; $ai -lt 37; $ai++) {
-            $at = $attackerTypes[$ai]
-            Write-Host ("    {0,-4} {1,-24} {2}" -f $at.Id, $at.Name, $at.Desc) -ForegroundColor White
-        }
-        Write-Host ''
-        Write-Host '  Total: 37 attacker types (T0-T36)' -ForegroundColor Green
+        Write-Host '  NOTE: In benchmark, attackers are distributed proportionally across all shards.' -ForegroundColor Gray
+        Write-Host '        Each shard gets a random subset of these 37 types based on the percentage chosen.' -ForegroundColor Gray
+        Write-Host '        The reputation engine must detect and eliminate/gate all 37 types.' -ForegroundColor Gray
         Write-Host ''
         Read-Host '  Press ENTER to continue'
         continue
@@ -275,21 +323,20 @@ while ($true) {
     # ---- PRESETS ----
     elseif ($presets.ContainsKey($choice)) {
         $p = $presets[$choice]
-        $NUM_SHARDS = $p.Shards; $NODES = $p.Nodes; $PERCENT = $p.Percent; $STEPS = $p.Steps
+        $NUM_SHARDS = $p.Shards; $NODES = $p.Nodes; $PERCENT = $p.Percent; $STEPS = 10000
     }
     else {
-        Write-Host '  Invalid option.' -ForegroundColor Red
+        Write-Host '  Invalid choice.' -ForegroundColor Red
         Start-Sleep -Seconds 1; continue
     }
 
     # ===================== RUN TEST =====================
 
-    # Batch 4 shards in parallel, 2 Rayon threads per shard
     $BATCH_SIZE = 4
 
     $SHARD_IPS = @()
     for ($idx = 0; $idx -lt $NUM_SHARDS; $idx++) {
-        $oct3 = [m[Math]::Floor($idx / 254) + 1
+        $oct3 = [math]::Floor($idx / 254) + 1
         $oct4 = ($idx % 254) + 1
         $port = 8100 + $idx
         $SHARD_IPS += ('10.0.{0}.{1}:{2}' -f $oct3, $oct4, $port)
@@ -297,14 +344,23 @@ while ($true) {
 
     $allReportLines = @()
 
+    function Log-Report($txt, [string]$Color) {
+        if ($Color) {
+            Write-Host $txt -ForegroundColor $Color
+        } else {
+            Write-Host $txt
+        }
+        $script:allReportLines += $txt
+    }
+
     try {
-        $batchCount = [m[Math]::Ceiling($NUM_SHARDS / $BATCH_SIZE)
+        $batchCount = [math]::Ceiling($NUM_SHARDS / $BATCH_SIZE)
         $totalNodes = $NUM_SHARDS * $NODES
         $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 
         Log-Report ''
         Log-Report '============================================================'
-        $hdr = '  NeuroGraph ANGP v4.3-EXT  -  {0} SHARDS x {1} NODES/SHARD  |  {2} total nodes  |  {3}% attackers  |  {4} steps' -f $NUM_SHARDS, $NODES, $totalNodes, $PERCENT, $STEPS
+        $hdr = '  NeuroGraph ANGP v4.3-EXT  -  {0} SHARDS x {1} NODES/SHARD  |  {2} total nodes  |  {3}% attackers' -f $NUM_SHARDS, $NODES, $totalNodes, $PERCENT
         Log-Report $hdr
         Log-Report ('  Date: {0}' -f $timestamp)
         Log-Report '  37 attacker types (T0-T36): T0-T15 (16 base) + T16-T21 (6 ext1) + T22-T36 (15 ext2)' -ForegroundColor Gray
@@ -315,7 +371,6 @@ while ($true) {
         Remove-Item (Join-Path $LogDir 'shard_*.log') -Force -ErrorAction SilentlyContinue
         Remove-Item (Join-Path $LogDir '*.tmp') -Force -ErrorAction SilentlyContinue
         Remove-Item (Join-Path $LogDir '*.bat') -Force -ErrorAction SilentlyContinue
-        Remove-Item (Join-Path $LogDir '*.sh') -Force -ErrorAction SilentlyContinue
 
         Log-Report ''
         Log-Report ("  SYSTEM: {0} CPU cores  {1}" -f $coreCount, $osName)
@@ -329,9 +384,8 @@ while ($true) {
         Log-Report ("    Batch size (parallel):    {0}" -f $BATCH_SIZE)
         Log-Report ("    Batches total:            {0}" -f $batchCount)
         Log-Report ("    Steps:                    {0}" -f $STEPS)
-        Log-Report ("    Attackers:                {0}% (37 types: T0-T36)" -f $PERCENT)
+        Log-Report ("    Attackers:                {0}% (37 attacker types: T0-T36)" -f $PERCENT)
         Log-Report '    RAYON_NUM_THREADS:        2 per shard'
-        Log-Report ("    Batch config:             {0} shards x 2 Rayon = {1} threads/batch" -f $BATCH_SIZE, ($BATCH_SIZE * 2))
         Log-Report ''
         Log-Report '============================================================'
 
@@ -359,46 +413,24 @@ while ($true) {
                 $ip = $SHARD_IPS[$i]
                 $tmpOut = Join-Path $LogDir ("s{0}_out.tmp" -f $i)
                 $tmpErr = Join-Path $LogDir ("s{0}_err.tmp" -f $i)
+                $batFile = Join-Path $LogDir ("run_{0}.bat" -f $i)
 
-                # --- Cross-platform shard execution ---
-                if ($isWindows) {
-                    $batFile = Join-Path $LogDir ("run_{0}.bat" -f $i)
-                    $batLines = @(
-                        '@echo off',
-                        ('set SHARD_ID={0}' -f $i),
-                        ('set SHARD_IP={0}' -f $ip),
-                        'set RAYON_NUM_THREADS=2',
-                        ('"{0}" --nodes {1} --steps {2} --percent {3} 1>"{4}" 2>"{5}"' -f $simBinary, $NODES, $STEPS, $PERCENT, $tmpOut, $tmpErr)
-                    )
-                    [System.IO.File]::WriteAllText($batFile, ($batLines -join "`r`n"), [System.Text.Encoding]::ASCII)
+                $batLines = @(
+                    '@echo off',
+                    ('set SHARD_ID={0}' -f $i),
+                    ('set SHARD_IP={0}' -f $ip),
+                    'set RAYON_NUM_THREADS=2',
+                    ('"{0}" --nodes {1} --steps {2} --percent {3} 1>"{4}" 2>"{5}"' -f $simBinary, $NODES, $STEPS, $PERCENT, $tmpOut, $tmpErr)
+                )
+                [System.IO.File]::WriteAllText($batFile, ($batLines -join "`r`n"), [System.Text.Encoding]::ASCII)
 
-                    $psi = New-Object System.Diagnostics.ProcessStartInfo
-                    $psi.FileName = 'cmd.exe'
-                    $psi.Arguments = '/c "' + $batFile + '"'
-                    $psi.UseShellExecute = $false
-                    $psi.CreateNoWindow = $true
-                    $proc = [System.Diagnostics.Process]::Start($psi)
-                    $jobs += @{ Id=$i; Process=$proc; LogFile=$logFile; TmpOut=$tmpOut; TmpErr=$tmpErr; ScriptFile=$batFile }
-                } else {
-                    $shFile = Join-Path $LogDir ("run_{0}.sh" -f $i)
-                    $shLines = @(
-                        '#!/bin/bash',
-                        ('export SHARD_ID={0}' -f $i),
-                        ('export SHARD_IP={0}' -f $ip),
-                        'export RAYON_NUM_THREADS=2',
-                        ('"{0}" --nodes {1} --steps {2} --percent {3} 1>"{4}" 2>"{5}"' -f $simBinary, $NODES, $STEPS, $PERCENT, $tmpOut, $tmpErr)
-                    )
-                    [System.IO.File]::WriteAllText($shFile, ($shLines -join "`n"), [System.Text.Encoding]::UTF8)
-                    & chmod +x $shFile
-
-                    $psi = New-Object System.Diagnostics.ProcessStartInfo
-                    $psi.FileName = '/bin/bash'
-                    $psi.Arguments = '"' + $shFile + '"'
-                    $psi.UseShellExecute = $false
-                    $psi.CreateNoWindow = $true
-                    $proc = [System.Diagnostics.Process]::Start($psi)
-                    $jobs += @{ Id=$i; Process=$proc; LogFile=$logFile; TmpOut=$tmpOut; TmpErr=$tmpErr; ScriptFile=$shFile }
-                }
+                $psi = New-Object System.Diagnostics.ProcessStartInfo
+                $psi.FileName = 'cmd.exe'
+                $psi.Arguments = '/c "' + $batFile + '"'
+                $psi.UseShellExecute = $false
+                $psi.CreateNoWindow = $true
+                $proc = [System.Diagnostics.Process]::Start($psi)
+                $jobs += @{ Id=$i; Process=$proc; LogFile=$logFile; TmpOut=$tmpOut; TmpErr=$tmpErr; BatFile=$batFile }
             }
 
             foreach ($job in $jobs) {
@@ -406,7 +438,7 @@ while ($true) {
                 $sw = [System.Diagnostics.Stopwatch]::StartNew()
                 while (-not $proc.HasExited) {
                     if ($sw.Elapsed.TotalSeconds -ge 5) {
-                        $sec = [m[Math]::Floor($sw.Elapsed.TotalSeconds)
+                        $sec = [math]::Floor($sw.Elapsed.TotalSeconds)
                         Write-Host ("`r    shard {0}: {1}s" -f $sid, $sec) -NoNewline -ForegroundColor DarkGray
                     }
                     Start-Sleep -Milliseconds 500
@@ -427,7 +459,7 @@ while ($true) {
                     $okCount++
                 }
                 Set-Content -Path $job.LogFile -Value ($stdout + $stderr) -Encoding UTF8
-                Remove-Item $job.ScriptFile -Force -ErrorAction SilentlyContinue
+                Remove-Item $job.BatFile -Force -ErrorAction SilentlyContinue
             }
 
             Write-Host ('         OK: {0}  FAIL: {1}' -f $okCount, $failCount) -ForegroundColor Gray
@@ -442,6 +474,16 @@ while ($true) {
 
         $totalFinalized = 0; $totalGenerated = 0; $totalRejected = 0; $sumTps = 0
         $maxTime = 0; $minTime = [double]::MaxValue; $failedShards = 0
+        # v4.3-EXT-patched FIX 2/5: per-shard time collection for real mean/stddev
+        $sumShardTime = 0.0; $sumSqShardTime = 0.0; $shardTimeCount = 0
+        $shardTimes = @()
+        # v4.3-EXT-patched FIX 7: per-shard TPS min/max for bottleneck identification
+        $minShardTps = [long]::MaxValue; $maxShardTps = 0
+        $minShardTpsId = -1; $maxShardTpsId = -1
+        $allShardTps = @()
+        # v4.3-EXT-patched FIX 3: also parse DS/Theft attempts+blocked separately
+        # so we can show "attacks blocked" alongside "honest tx rejected"
+        $totalDSAttempts = 0; $totalTheftAttempts = 0
 
         # Security metric accumulators
         $sumFPR = 0.0; $fprCount = 0
@@ -453,78 +495,49 @@ while ($true) {
             $logFile = Join-Path $LogDir ("shard_{0}.log" -f $i)
             if (-not (Test-Path $logFile)) { $failedShards++; continue }
             $content = Get-Content $logFile -Raw
-            # --- TPS (multiple format variants) ---
-            $tps = 0
-            if ($content -match 'Overall TPS:\s*([0-9\.]+)') { $tps = [long]$Matches[1] }
-            elseif ($content -match 'TPS:\s*([0-9\.]+)') { $tps = [long]$Matches[1] }
-            elseif ($content -match 'tps=([0-9\.]+)') { $tps = [long]$Matches[1] }
-            elseif ($content -match '([0-9\.]+)\s*TPS') { $tps = [long]$Matches[1] }
-            # --- Finalized ---
-            $finalized = 0
-            if ($content -match 'Finalized:\s*([0-9]+)') { $finalized = [long]$Matches[1] }
-            elseif ($content -match 'finalized=([0-9]+)') { $finalized = [long]$Matches[1] }
-            elseif ($content -match 'Finali[sz]ed.*?([0-9]+)') { $finalized = [long]$Matches[1] }
-            # --- Generated ---
-            $generated = 0
-            if ($content -match 'Generated:\s*([0-9]+)') { $generated = [long]$Matches[1] }
-            elseif ($content -match 'generated=([0-9]+)') { $generated = [long]$Matches[1] }
-            # --- Rejected ---
-            $rejected = 0
-            if ($content -match 'Rejected:\s*([0-9]+)') { $rejected = [long]$Matches[1] }
-            elseif ($content -match 'rejected=([0-9]+)') { $rejected = [long]$Matches[1] }
-            # --- Total time ---
-            $totalTime = 0.0
-            if ($content -match 'Total time:\s*([0-9\.]+)\s*s') { $totalTime = [double]$Matches[1] }
-            elseif ($content -match 'total_time=([0-9\.]+)') { $totalTime = [double]$Matches[1] }
-            elseif ($content -match 'elapsed.*?([0-9\.]+)\s*s') { $totalTime = [double]$Matches[1] }
-            if ($tps -eq 0 -and $finalized -eq 0) {
-                $failedShards++
-                # Diagnostic: dump first 5 lines so user can see actual binary output format
-                if ($failedShards -le 3) {
-                    $diagLines = ($content -split "`n" | Select-Object -First 5)
-                    Write-Host ("  [DIAG] shard {0} -- no TPS/Finalized match. First 5 lines of log:" -f $i) -ForegroundColor Yellow
-                    foreach ($dl in $diagLines) { Write-Host ("    {0}" -f $dl.Trim()) -ForegroundColor DarkYellow }
-                }
-                continue
-            }
+            $tps = 0; if ($content -match 'Overall TPS:\s+([0-9\.]+)') { $tps = [long]$Matches[1] }
+            $finalized = 0; if ($content -match 'Finalized:\s+([0-9]+)') { $finalized = [long]$Matches[1] }
+            $generated = 0; if ($content -match 'Generated:\s+([0-9]+)') { $generated = [long]$Matches[1] }
+            $rejected = 0; if ($content -match 'Rejected:\s+([0-9]+)') { $rejected = [long]$Matches[1] }
+            $totalTime = 0.0; if ($content -match 'Total time:\s+([0-9\.]+)s') { $totalTime = [double]$Matches[1] }
+            if ($tps -eq 0 -and $finalized -eq 0) { $failedShards++; continue }
             $totalFinalized += $finalized; $totalGenerated += $generated; $totalRejected += $rejected; $sumTps += $tps
             if ($totalTime -gt $maxTime) { $maxTime = $totalTime }
             if ($totalTime -lt $minTime) { $minTime = $totalTime }
+            # v4.3-EXT-patched FIX 5: collect per-shard time for real mean
+            if ($totalTime -gt 0) {
+                $sumShardTime += $totalTime
+                $sumSqShardTime += ($totalTime * $totalTime)
+                $shardTimeCount++
+                $shardTimes += $totalTime
+            }
+            # v4.3-EXT-patched FIX 7: track min/max per-shard TPS + bottleneck ID
+            if ($tps -gt 0) {
+                $allShardTps += [pscustomobject]@{ Id=$i; Tps=$tps; Time=$totalTime }
+                if ($tps -lt $minShardTps) { $minShardTps = $tps; $minShardTpsId = $i }
+                if ($tps -gt $maxShardTps) { $maxShardTps = $tps; $maxShardTpsId = $i }
+            }
 
-            # Parse security metrics
-            # FPR -- try multiple format variants from binary output
-            if ($content -match 'False Positive Rate \(FPR\):\s*([0-9\.]+)%') {
-                $sumFPR += [double]$Matches[1]; $fprCount++
-            } elseif ($content -match 'FPR:\s*([0-9\.]+)%') {
-                $sumFPR += [double]$Matches[1]; $fprCount++
-            } elseif ($content -match 'honest_fpr=([0-9\.]+)') {
+            # Parse security metrics from each shard log
+            if ($content -match 'False Positive Rate \(FPR\): ([0-9\.]+)%') {
                 $sumFPR += [double]$Matches[1]; $fprCount++
             }
-            # ABR -- try multiple format variants
-            if ($content -match 'Attack Blocking Rate \(ABR\):\s*([0-9\.]+)%') {
-                $sumABR += [double]$Matches[1]; $abrCount++
-            } elseif ($content -match 'ABR:\s*([0-9\.]+)%') {
-                $sumABR += [double]$Matches[1]; $abrCount++
-            } elseif ($content -match 'attack_block_rate=([0-9\.]+)') {
+            if ($content -match 'Attack Blocking Rate \(ABR\): ([0-9\.]+)%') {
                 $sumABR += [double]$Matches[1]; $abrCount++
             }
-            # Double-spend -- try multiple format variants
-            if ($content -match 'Double-spend blocked:\s*(\d+)\s*/\s*(\d+)') {
-                $totalDSBlocked += [long]$Matches[1]; $totalDSTotal += [long]$Matches[2]; $dsCount++
-            } elseif ($content -match 'double_spend_blocked=(\d+)/(\d+)') {
-                $totalDSBlocked += [long]$Matches[1]; $totalDSTotal += [long]$Matches[2]; $dsCount++
-            } elseif ($content -match 'Double.?spend.*?(\d+)\s*/\s*(\d+)') {
+            if ($content -match 'Double-spend blocked: (\d+)/(\d+)') {
                 $totalDSBlocked += [long]$Matches[1]; $totalDSTotal += [long]$Matches[2]; $dsCount++
             }
-            # Theft -- try multiple format variants
-            if ($content -match 'Theft blocked:\s*(\d+)\s*/\s*(\d+)') {
-                $totalTheftBlocked += [long]$Matches[1]; $totalTheftTotal += [long]$Matches[2]; $theftCount++
-            } elseif ($content -match 'theft_blocked=(\d+)/(\d+)') {
-                $totalTheftBlocked += [long]$Matches[1]; $totalTheftTotal += [long]$Matches[2]; $theftCount++
-            } elseif ($content -match 'Theft.*?(\d+)\s*/\s*(\d+)') {
+            if ($content -match 'Theft blocked: (\d+)/(\d+)') {
                 $totalTheftBlocked += [long]$Matches[1]; $totalTheftTotal += [long]$Matches[2]; $theftCount++
             }
         }
+
+        # v4.3-EXT-patched FIX 3: total attack attempts + blocked
+        $totalDSAttempts = $totalDSTotal
+        $totalTheftAttempts = $totalTheftTotal
+        $totalAttacksBlocked = $totalDSBlocked + $totalTheftBlocked
+        $totalAttacksAttempted = $totalDSAttempts + $totalTheftAttempts
 
         # Compute averaged security metrics
         $avgFPR = if ($fprCount -gt 0) { [math]::Round($sumFPR / $fprCount, 4) } else { -1 }
@@ -533,16 +546,60 @@ while ($true) {
         $theftPct = if ($totalTheftTotal -gt 0) { [math]::Round($totalTheftBlocked * 100.0 / $totalTheftTotal, 2) } else { -1 }
 
         $goodShards = $NUM_SHARDS - $failedShards
-        Log-Report ("  Shards OK: {0} / {1}" -f $goodShards, $NUM_SHARDS)
-        if ($failedShards -gt 0) { Log-Report ("  Shards FAILED: {0}" -f $failedShards) }
+        Log-Report ("  Shards succeeded: {0} / {1}" -f $goodShards, $NUM_SHARDS)
+        if ($failedShards -gt 0) { Log-Report ("  Shards failed:   {0}" -f $failedShards) }
         Log-Report ''
 
         if ($goodShards -gt 0) { $avgTps = [math]::Round($sumTps / $goodShards) } else { $avgTps = 0 }
         if ($wallElapsed -gt 0) { $aggTpsWall = [math]::Round($totalFinalized / $wallElapsed) } else { $aggTpsWall = 0 }
-        if ($maxTime -gt 0) { $aggTpsFullPar = [math]::Round($totalFinalized / $maxTime) } else { $aggTpsFullPar = 0 }
-        $tps333Full = [math]::Round($avgTps * 333.0)
+        # v4.3-EXT-patched FIX 2: real mean of per-shard time (was wallElapsed/N)
+        if ($shardTimeCount -gt 0) {
+            $meanShardTime = $sumShardTime / $shardTimeCount
+            $varShardTime  = ($sumSqShardTime / $shardTimeCount) - ($meanShardTime * $meanShardTime)
+            if ($varShardTime -lt 0) { $varShardTime = 0 }
+            $stddevShardTime = [math]::Sqrt($varShardTime)
+        } else { $meanShardTime = 0; $stddevShardTime = 0 }
+        # v4.3-EXT-patched FIX 1: real scaling factor (was hardcoded N)
+        if ($avgTps -gt 0) { $scalingFactorReal = [math]::Round($aggTpsWall / $avgTps, 2) } else { $scalingFactorReal = 0 }
+        # v4.3-EXT-patched FIX 8: batch parallel efficiency (corrected formula)
+        # OLD formula (mean*N/wallElapsed) gave values >100% (misleading).
+        # NEW: ideal_batch_wall = meanShardTime * ceil(N/BATCH_SIZE)
+        #      batchParEff = ideal_batch / actual * 100  (always <= 100%)
+        # Note: this is NOT "sequential" time. It's the idealized time if each
+        # batch of BATCH_SIZE shards ran perfectly parallel, with zero overhead
+        # between batches. The gap to wallElapsed = scheduling/IO overhead.
+        $batchCountRan = [math]::Ceiling($goodShards / $BATCH_SIZE)
+        if ($wallElapsed -gt 0 -and $meanShardTime -gt 0) {
+            $idealBatchWall = $meanShardTime * $batchCountRan
+            $batchParEff = [math]::Round($idealBatchWall / $wallElapsed * 100, 1)
+        } else { $batchParEff = 0 }
+        # v4.3-EXT-patched FIX 7: per-shard TPS distribution + bottleneck
+        if ($minShardTps -eq [long]::MaxValue) { $minShardTps = 0 }
+        if ($maxShardTps -gt 0 -and $minShardTps -gt 0) {
+            $tpsImbalance = [math]::Round(($maxShardTps - $minShardTps) * 100.0 / $maxShardTps, 2)
+        } else { $tpsImbalance = 0 }
+        # v4.3-EXT-patched FIX 4 (final): extrapolation is now CONDITIONAL.
+        # When NUM_SHARDS >= 333 the entire EXTRAPOLATION block is hidden
+        # (projecting to 333 when already at 333 is redundant).
+        # When NUM_SHARDS < 333 we show only the meaningful projection
+        # (Aggregate, ideal linear) and explicitly mark Wall-clock as
+        # "MUST BE MEASURED" (cannot be extrapolated from smaller N).
+        #
+        # Definitions (per whitepaper):
+        #   tps/shard     = per-shard throughput (tx_processed_by_shard / shard_time)
+        #   tps/aggregate = SUM of per-shard TPS  = N x tps/shard (THEORETICAL CAPACITY)
+        #   tps/agg       = Wall-clock TPS = total_tx / real_wall_time (HARDWARE-LIMITED)
+        $tps333Ideal = [math]::Round($avgTps * 333.0)
+        # Aggregate capacity at current N (sum of independent shards)
+        $aggTpsCurrentN = [long]$avgTps * $goodShards
+        # Wall-clock efficiency observed at current N (for reference, NOT for extrapolation)
+        if ($aggTpsCurrentN -gt 0) {
+            $wallEffPct = [math]::Round($aggTpsWall * 100.0 / $aggTpsCurrentN, 2)
+        } else { $wallEffPct = 0 }
         if ($totalGenerated -gt 0) { $finRate = [math]::Round($totalFinalized * 100.0 / $totalGenerated, 2) } else { $finRate = 0 }
-        if ($sumTps -gt 0) { $scalingEff = [math]::Round($aggTpsFullPar * 100.0 / $sumTps, 1) } else { $scalingEff = 0 }
+        # v4.3-EXT-patched FIX 6: reward tx (fee) explanation
+        $totalRewardTxs = $totalFinalized - $totalGenerated
+        if ($totalRewardTxs -lt 0) { $totalRewardTxs = 0 }
 
         Log-Report '[3/3] FINAL RESULTS'
         Log-Report ''
@@ -552,43 +609,80 @@ while ($true) {
         Log-Report ''
         Log-Report '  SYSTEM:'
         Log-Report ("    CPU cores:               {0}" -f $coreCount)
-        Log-Report ("    Shards:                   {0} (OK: {1})" -f $NUM_SHARDS, $goodShards)
+        Log-Report ("    Shards:                   {0} (succeeded: {1})" -f $NUM_SHARDS, $goodShards)
         Log-Report ("    Nodes per shard:          {0}" -f $NODES)
         Log-Report ("    Total nodes:              {0}" -f $totalNodes)
-        Log-Report ("    Batch size:               {0} (2 threads/shard)" -f $BATCH_SIZE)
+        Log-Report ("    Batch size:               {0} (2 thr/shard)" -f $BATCH_SIZE)
         Log-Report ("    Steps:                    {0}" -f $STEPS)
-        Log-Report ("    Attackers:                {0}% (37 types: T0-T36)" -f $PERCENT)
+        Log-Report ("    Attackers:                {0}% (37 attacker types: T0-T36)" -f $PERCENT)
         Log-Report ''
         Log-Report '  TRANSACTIONS:'
-        Log-Report ('    Total generated:         {0:N0}' -f $totalGenerated)
-        Log-Report ('    Total finalized:         {0:N0}' -f $totalFinalized)
-        Log-Report ('    Total rejected:           {0:N0}' -f $totalRejected)
-        Log-Report ("    Finalization rate:        {0}%" -f $finRate)
+        Log-Report ('    Total generated (honest): {0:N0}' -f $totalGenerated)
+        Log-Report ('    Total finalized:          {0:N0}  (honest + {1:N0} reward tx @ 0.1% fee)' -f $totalFinalized, $totalRewardTxs)
+        Log-Report ('    Honest tx rejected:       {0:N0}' -f $totalRejected)
+        if ($totalAttacksAttempted -gt 0) {
+            Log-Report ('    Total attacks blocked:    {0:N0} / {1:N0}  ({2:N2}%)' -f $totalAttacksBlocked, $totalAttacksAttempted, ($totalAttacksBlocked * 100.0 / $totalAttacksAttempted))
+        }
+        Log-Report ("    Finalization rate:        {0}%  (tf/tg, includes fee txs)" -f $finRate)
         Log-Report ''
         Log-Report '  TIMING:'
-        Log-Report ('    Wall-clock total:         {0:N1}s ({1:N1} min)' -f $wallElapsed, ($wallElapsed / 60))
-        Log-Report ('    Avg per shard (wall):    {0}s' -f ([math]::Round($wallElapsed / $NUM_SHARDS, 2)))
+        Log-Report ('    Wall-clock total:         {0:N1}s ({1:N1} min)  [sequential batches of {2}]' -f $wallElapsed, ($wallElapsed / 60), $BATCH_SIZE)
+        # v4.3-EXT-patched FIX 2: real arithmetic mean (was wallElapsed/N)
+        Log-Report ('    Avg per shard (real):     {0:N2}s  (arithmetic mean of per-shard Total time)' -f $meanShardTime)
+        if ($stddevShardTime -gt 0) {
+            Log-Report ('    Std dev shard time:       {0:N2}s' -f $stddevShardTime)
+        }
         if ($minTime -lt [double]::MaxValue) { Log-Report ('    Min shard time:           {0:N2}s' -f $minTime) }
         Log-Report ('    Max shard time:           {0:N2}s' -f $maxTime)
         Log-Report ''
         Log-Report '  +=============================================================+'
         Log-Report '  |                    TPS RESULTS                                |'
         Log-Report '  +=============================================================+'
-        Log-Report ('  | Avg TPS / shard:               {0,12:N0} TPS                  |' -f $avgTps)
-        Log-Report ('  | Sum independent TPS ({0}x):       {1,12:N0} TPS                  |' -f $goodShards, $sumTps)
-        Log-Report '  |                                                             |'
-        Log-Report ('  | AGGREGATE TPS (wall-clock):     {0,12:N0} TPS                  |' -f $aggTpsWall)
-        Log-Report '  |                                                             |'
-        Log-Report ('  |   ({0} shards on {1}+ cores simultaneous)' -f $NUM_SHARDS, $coreCount)
-        Log-Report '  |                                                             |'
-        Log-Report ('  | Scaling factor:                 {0,12:N0} x                    |' -f $NUM_SHARDS)
-        Log-Report ('  | Scaling efficiency:             {0,12:N1}%                    |' -f $scalingEff)
+        Log-Report ('  | tps/shard (avg):                {0,12:N0} TPS  (per-shard mean)    |' -f $avgTps)
+        if ($minShardTpsId -ge 0) {
+            Log-Report ('  | tps/shard (min):                {0,12:N0} TPS  (shard #{1} <- bottleneck) |' -f $minShardTps, $minShardTpsId)
+        }
+        if ($maxShardTpsId -ge 0) {
+            Log-Report ('  | tps/shard (max):                {0,12:N0} TPS  (shard #{1})          |' -f $maxShardTps, $maxShardTpsId)
+        }
+        if ($tpsImbalance -gt 0) {
+            Log-Report ('  | TPS imbalance (max-min)/max:    {0,12:N2}%                        |' -f $tpsImbalance)
+        }
+        Log-Report ('  |                                                             |')
+        Log-Report ('  | tps/aggregate:                {0,12:N0} TPS  (Network capacity = N x tps/shard) |' -f $sumTps)
+        Log-Report ('  |                                                             |')
+        Log-Report ('  | tps/agg (wall-clock):         {0,12:N0} TPS  (Total_tx / wallElapsed, measured) |' -f $aggTpsWall)
+        Log-Report ('  |   ({0} shards in sequential batches of {1})' -f $goodShards, $BATCH_SIZE)
+        Log-Report ('  |                                                             |')
+        # v4.3-EXT-patched FIX 1: real scaling factor (was hardcoded $NUM_SHARDS)
+        Log-Report ('  | Scaling factor (real):           {0,12:N2} x  (tps/agg / tps/shard)   |' -f $scalingFactorReal)
+        Log-Report ('  | Batch parallel efficiency:       {0,12:N1}%  (ideal_batch/wallElapsed) |' -f $batchParEff)
         Log-Report '  +=============================================================+'
         Log-Report ''
-        Log-Report '  EXTRAPOLATION to whitepaper (333 shards, 8 nodes/shard):' -ForegroundColor Magenta
-        Log-Report ('    This bench (1 shard):    ~{0:N0} TPS' -f $avgTps)
-        Log-Report ('    This bench ({0} shards):  ~{1:N0} TPS' -f $goodShards, ([long]$avgTps * $goodShards))
-        Log-Report ('    Projected 333 shards:    ~{0:N0} TPS (v4.3-EXT optimal)' -f $tps333Full)
+        # v4.3-EXT-patched FIX 4 (final): EXTRAPOLATION block hidden when
+        # NUM_SHARDS >= 333 (no point projecting to 333 if already at 333+).
+        # For smaller N, show only meaningful projection (Aggregate, linear).
+        if ($NUM_SHARDS -lt 333) {
+            Log-Report '  EXTRAPOLATION to whitepaper (333 shards, 8 nodes/shard):' -ForegroundColor Magenta
+            Log-Report ''
+            Log-Report '  [A] AGGREGATE TPS (theoretical capacity = N x tps/shard):' -Color Cyan
+            Log-Report ('    This bench (1 shard):     ~{0:N0} TPS' -f $avgTps)
+            Log-Report ('    This bench ({0} shards):   ~{1:N0} TPS  (= {0} x tps/shard)' -f $goodShards, $aggTpsCurrentN)
+            Log-Report ('    Projected at 333 shards:  ~{0:N0} TPS  (= 333 x tps/shard, IDEAL LINEAR)' -f $tps333Ideal)
+            Log-Report ''
+            Log-Report '  [B] WALL-CLOCK TPS (hardware-limited, must be measured):' -Color Yellow
+            Log-Report ('    This bench ({0} shards):   ~{1:N0} TPS  ({2:N2}% of aggregate)' -f $goodShards, $aggTpsWall, $wallEffPct)
+            Log-Report ('      Limited by: {0} cores, BATCH_SIZE={1}' -f $coreCount, $BATCH_SIZE)
+            Log-Report '    Projected at 333 shards:  MUST BE MEASURED on real hardware.'
+            Log-Report ''
+        }
+        Log-Report '  NOTE - the 3 TPS metrics:' -Color Gray
+        Log-Report '    tps/shard     = per-shard throughput (bottleneck detector)' -Color Gray
+        Log-Report '    tps/aggregate = SUM of per-shard TPS = N x tps/shard (CAPACITY, linear)' -Color Gray
+        Log-Report '    tps/agg       = total_tx / wall_time (HARDWARE-LIMITED, measured)' -Color Gray
+        Log-Report '    Aggregate >= Wall-clock ALWAYS. When shards run sequentially' -Color Gray
+        Log-Report '    (BATCH_SIZE=4 on limited cores), tps/agg << tps/aggregate.' -Color Gray
+        Log-Report '    With 1 thread pool per shard (unlimited cores), tps/agg -> tps/aggregate.' -Color Gray
         Log-Report ''
         if ($PERCENT -eq 0) {
             Log-Report '  MODE: CLEAN (0% attackers)' -Color Green
@@ -597,12 +691,12 @@ while ($true) {
             if ($dsPct -ge 0) {
                 Log-Report ('    Double-spend blocked:       {0}/{1} ({2}%)' -f $totalDSBlocked, $totalDSTotal, $dsPct) -Color Green
             } else {
-                Log-Report '    Double-spend blocked:       N/A (not found in logs)' -Color DarkGray
+                Log-Report '    Double-spend blocked:       N/A (not detected in logs)' -Color DarkGray
             }
             if ($theftPct -ge 0) {
                 Log-Report ('    Theft blocked:              {0}/{1} ({2}%)' -f $totalTheftBlocked, $totalTheftTotal, $theftPct) -Color Green
             } else {
-                Log-Report '    Theft blocked:              N/A (not found in logs)' -Color DarkGray
+                Log-Report '    Theft blocked:              N/A (not detected in logs)' -Color DarkGray
             }
             if ($avgFPR -ge 0) {
                 Log-Report ('    Honest FPR:                {0}%' -f $avgFPR) -Color Green
@@ -610,9 +704,13 @@ while ($true) {
                 Log-Report '    Honest FPR:                N/A' -Color DarkGray
             }
             if ($avgABR -ge 0) {
-                Log-Report ('    ABR:                       {0}%' -f $avgABR) -Color Green
+                # v4.3-EXT-patched: clarify that ABR is averaged across shards
+                # and means attackers eliminated OR gated-but-not-eliminated
+                Log-Report ('    ABR (avg per shard):       {0}%  (eliminated + gated / total attackers)' -f $avgABR) -Color Green
+                Log-Report ('      -> Low ABR with low STEPS means reputation engine did not' ) -Color Gray
+                Log-Report ('         have enough time to converge (calibrated for 5K+ steps).' ) -Color Gray
             } else {
-                Log-Report '    ABR:                       N/A' -Color DarkGray
+                Log-Report ('    ABR:                       N/A') -Color DarkGray
             }
         }
         Log-Report ("  Shard logs: {0}" -f $LogDir) -Color DarkGray
@@ -629,36 +727,19 @@ while ($true) {
             Log-Report ''
             Log-Report '  TEST HISTORY:' -Color Magenta
             Log-Report '  +------+-------+------+-------+-------+--------+--------+------------------+'
-            Log-Report '  | Shard| Nodes | Atk% |  TPS  | Wall  |  Agg   | Date                |'
+            Log-Report '  | Shard| Nodes | Atk% |  TPS  | Wall  |  Agg   | Data              |'
             Log-Report '  +------+-------+------+-------+-------+--------+--------+------------------+'
             foreach ($rp in $allReports) {
                 $rc = Get-Content $rp.FullName -Raw
                 $rS = '?'; if ($rc -match '(\d+)\s+SHARDS') { $rS = $Matches[1] }
                 $rN = '?'; if ($rc -match '(\d+)\s+NODES/SHARD') { $rN = $Matches[1] }
                 $rA = '?'; if ($rc -match 'Attackers:\s+(\d+)%') { $rA = $Matches[1] }
-                # --- TPS (try multiple patterns for locale/format robustness) ---
-                $rT = '?'
-                if ($rc -match 'Avg TPS / shard:\s*([\d,]+)\s*TPS') { $rT = $Matches[1] }
-                elseif ($rc -match 'Avg TPS / shard:\s*(\d+)\s*TPS') { $rT = $Matches[1] }
-                elseif ($rc -match 'Avg TPS.*?([\d,]+)\s*TPS') { $rT = $Matches[1] }
-                # --- Wall-clock ---
-                $rW = '?'
-                if ($rc -match 'Wall-clock total:\s*([\d\.]+)\s*s') { $rW = $Matches[1] + 's' }
-                elseif ($rc -match 'Wall.?clock.*?([\d\.]+)\s*s') { $rW = $Matches[1] + 's' }
-                # --- Aggregate TPS ---
-                $rAg = '?'
-                if ($rc -match 'AGGREGATE TPS \(wall-clock\):\s*([\d,]+)\s*TPS') { $rAg = $Matches[1] }
-                elseif ($rc -match 'AGGREGATE TPS \(wall-clock\):\s*(\d+)\s*TPS') { $rAg = $Matches[1] }
-                elseif ($rc -match 'AGGREGATE TPS.*?wall.*?([\d,]+)\s*TPS') { $rAg = $Matches[1] }
+                $rT = '?'; if ($rc -match 'tps/shard \(avg\):\s+([0-9,\s]+)TPS') { $rT = $Matches[1].Trim() }
+                $rW = '?'; if ($rc -match 'Wall-clock total:\s+([0-9\.]+)s') { $rW = $Matches[1].Trim() + 's' }
+                $rAg = '?'; if ($rc -match 'tps/agg \(wall-clock\):\s+([0-9,\s]+)TPS') { $rAg = $Matches[1].Trim() }
                 $rD = $rp.BaseName -replace 'TPS-','' -replace '-',' '
                 $rl = '  | {0,-4} | {1,-5} | {2,-4} | {3,-5} | {4,-6} | {5,-6} | {6,-16} |' -f $rS, $rN, $rA, $rT, $rW, $rAg, $rD
                 Log-Report $rl
-                # Diagnostic: if TPS/Wall/Agg all failed, show snippet from report
-                if ($rT -eq '?' -and $rW -eq '?' -and $rAg -eq '?') {
-                    Write-Host '  [DIAG-HISTORY] Regex did not match TPS/Wall/Agg. Snippet from report:' -ForegroundColor Yellow
-                    $snip = ($rc -split "`n" | Where-Object { $_ -match 'TPS|Wall|AGGREGATE|shard' } | Select-Object -First 5)
-                    foreach ($sl in $snip) { Write-Host ("    {0}" -f $sl.Trim()) -ForegroundColor DarkYellow }
-                }
             }
             Log-Report '  +------+-------+------+-------+-------+--------+--------+------------------+'
         }
@@ -668,13 +749,10 @@ while ($true) {
         Write-Host ("Stack: {0}" -f $_.ScriptStackTrace) -ForegroundColor Red
     }
 
-    # ---- TEST DONE ----
+    # ---- TEST COMPLETED ----
     Write-Host ''
     Write-Host '  -----------------------------------------------------------' -ForegroundColor DarkGray
-    Write-Host '  Test complete. Menu reappears below.' -ForegroundColor DarkGray
+    Write-Host '  Test completed. Menu reappears below.' -ForegroundColor DarkGray
     Write-Host '  -----------------------------------------------------------' -ForegroundColor DarkGray
     Start-Sleep -Seconds 1
 } # end while ($true)
-
-
-
