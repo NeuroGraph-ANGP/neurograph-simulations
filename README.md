@@ -29,14 +29,14 @@ cd neurograph-simulations
 ## Test Scripts
 
 | | .\RUN-TESTS-A.ps1 | .\RUN-NG-BENCHMARK.ps1 |
-|:---|:---|:---|| **Mode** | Single shard | Multi-shard (parallel) |
+|:---|:---|:---|
+| **Mode** | Single shard | Multi-shard (parallel) |
 | **Nodes** | 2664 | 2664 (333 x 8) |
 | **Attacker types** | 37 (T0-T36) | 37 (T0-T36) |
 | **Attacker %** | 0 to 99% | 0 to 99% |
 | **Key config** | Steps: 10K-100K | Shards: 100-444 |
 | **Options** | Security / Clean / Resistance / Quick / Batch | Clean / Attack / Scaled / Custom / Info |
 | **Purpose** | Test adversarial pressure at different intensities within one shard | Benchmark TPS, latency and security across distributed multi-shard network |
-
 ## Reproducing Paper Results
 
 > **1.** Run `.\RUN-NG-BENCHMARK.ps1` for the full multi-shard benchmark
@@ -60,6 +60,7 @@ cd neurograph-simulations
 The ANGP engine binary is provided for verification purposes only.
 
 </div>
+
 
 
 
