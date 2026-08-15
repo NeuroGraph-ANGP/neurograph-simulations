@@ -1,4 +1,4 @@
-#=============================================================================
+﻿#=============================================================================
 # NeuroGraph ANGP v4.3-EXT -- TEST SUITE A
 # 2664 Nodes | 37 Attacker Types (T0-T36) | Behavioral Strategies
 # PowerShell -- 4 step sets (10K/30K/50K/100K) x 9 attack levels
@@ -51,22 +51,13 @@ chcp 65001 > $null 2>&1
 
 # --- Find project folder (Cargo.toml) ---
 $ProjectDir = $PSScriptRoot
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
-    $ProjectDir = (Get-Location).Path
-    for ($k = 0; $k -lt 5; $k++) {
-        if (Test-Path "$ProjectDir\Cargo.toml") { break }
-        $parent = Split-Path $ProjectDir -Parent
-        if ($parent -eq $ProjectDir) { break }
-        $ProjectDir = $parent
-    }
+if (Test-Path "$ProjectDir\Cargo.toml") {
+    Set-Location $ProjectDir
+    $EngineDir = $ProjectDir
+} else {
+    Write-Host '  [INFO] No engine source. Using bin\ binary.' -ForegroundColor Yellow
+    $EngineDir = $null
 }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'C:\Users\totha\neurograph-engine' }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
-    Write-Host '  CRITICAL ERROR: Cargo.toml not found!' -ForegroundColor Red
-    Write-Host '  Run this script FROM the project folder (where Cargo.toml is)' -ForegroundColor Yellow
-    Read-Host 'Press ENTER'; exit 1
-}
-Set-Location $ProjectDir
 
 $isWindows = $true
 if ($PSVersionTable.PSVersion.Major -ge 6) {
@@ -140,17 +131,23 @@ function PrintBanner($title) {
 
 # --- Build / verify binary ---
 function EnsureBinary {
-    $binary = Join-Path $EngineDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
-    if (-not (Test-Path $binary)) {
-        LogInfo ('Binary not found: {0}' -f $binary)
-        LogInfo 'Building sim_stress_v43ext...'
-        Push-Location $EngineDir
-        cargo build --release --example sim_stress_v43ext 2>&1 | Tee-Object -FilePath $LogFile -Append
-        Pop-Location
-        if ($LASTEXITCODE -ne 0) { LogError 'Build FAILED!'; exit 1 }
-        LogSuccess 'Build completed!'
+    $binBinary = Join-Path $PSScriptRoot ("bin{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
+    if (Test-Path $binBinary) { return $binBinary }
+    if ($EngineDir) {
+        $binary = Join-Path $EngineDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
+        if (-not (Test-Path $binary)) {
+            LogInfo ('Binary not found: {0}' -f $binary)
+            LogInfo 'Building sim_stress_v43ext...'
+            Push-Location $EngineDir
+            cargo build --release --example sim_stress_v43ext 2>&1 | Tee-Object -FilePath $LogFile -Append
+            Pop-Location
+            if ($LASTEXITCODE -ne 0) { LogError 'Build FAILED!'; exit 1 }
+            LogSuccess 'Build completed!'
+        }
+        return $binary
     }
-    return $binary
+    LogError 'No binary found. Run setup.ps1 first.'
+    exit 1
 }
 
 # --- Run individual test ---
