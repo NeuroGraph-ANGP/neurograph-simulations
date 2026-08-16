@@ -43,10 +43,12 @@ Available presets:
 | `-Stress` | 2 664 | 20 000 | 2 000 | Heavy stress for adversarial scenarios |
 | `-NoWarmup` | — | — | 0 | Skip warmup (cold start baseline) |
 
-Examples:
+Run one of the commands below to start the warmup:
 
     .\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
+
     .\RUN-WARMUP-BOOTSTRAP.ps1 -Full
+
     .\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
 
 ---
