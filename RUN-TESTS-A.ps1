@@ -1,63 +1,81 @@
 ﻿#=============================================================================
-# NeuroGraph ANGP v4.3-EXT -- TEST SUITE A
+# NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A
 # 2664 Nodes | 37 Attacker Types (T0-T36) | Behavioral Strategies
-# PowerShell -- 4 step sets (10K/30K/50K/100K) x 9 attack levels
-# ============================================================================
+# PowerShell — 37 attack types + individual options
+# =============================================================================
 #
 # 37 ATTACKER TYPES (T0-T36):
-#   T0-T15 (16 base):
-#     T0  = Random                  T8  = Progressive-Drift
-#     T1  = Mimicry300              T9  = Outlier-Burst
-#     T2  = Mimicry500              T10 = Clone-Copy
-#     T3  = Adaptive-RepAware       T11 = Byzantine
-#     T4  = Coordinated-Bias        T12 = Sybil-Cluster
-#     T5  = Gaussian                T13 = Rep-Farmer
-#     T6  = FlipFlop                T14 = Oscillating-Drift
-#     T7  = Sleeper                 T15 = Colluding-Committee
+#   T0-T15 (16 basic):
+#     T0  = Random                  — random signals
+#     T1  = Mimicry300              — copies honest signal (window 300)
+#     T2  = Mimicry500              — copies honest signal (window 500)
+#     T3  = Adaptive-RepAware       — adapts based on reputation
+#     T4  = Coordinated-Bias        — coordinated bias among attackers
+#     T5  = Gaussian                — subtle gaussian perturbation
+#     T6  = FlipFlop                — alternates honest/attack
+#     T7  = Sleeper                 — dormant until threshold, then attacks
+#     T8  = Progressive-Drift       — slow, increasing drift
+#     T9  = Outlier-Burst           — bursts of aberrant values
+#     T10 = Clone-Copy              — clones an honest node's behavior
+#     T11 = Byzantine               — full byzantine behavior
+#     T12 = Sybil-Cluster           — cluster of fake identities
+#     T13 = Rep-Farmer              — false reputation cultivation
+#     T14 = Oscillating-Drift       — oscillating drift, hard to detect
+#     T15 = Colluding-Committee     — coordinated attacker committee
 #
 #   T16-T21 (6 extended):
-#     T16 = Slow Poisoning Consensus    T19 = Sybil Replacement
-#     T17 = Eclipse Attack              T20 = Patient Byzantine
-#     T18 = Majority Reference Manip    T21 = Threshold Gamer
+#     T16 = Slow Poisoning Consensus — 99.9% valid, 0.1% wrong votes
+#     T17 = Eclipse Attack           — controls neighbors' view
+#     T18 = Majority Reference Manipulation — 60% same wrong value
+#     T19 = Sybil Replacement        — eliminated → new identity, rep reset
+#     T20 = Patient Byzantine        — perfectly honest 5K steps, then full attack
+#     T21 = Threshold Gamer          — avoids detection thresholds (7 thresholds)
 #
 #   T22-T36 (15 advanced):
-#     T22 = True-Feedback-Adaptive      T30 = Threshold-Boundary
-#     T23 = Reputation-Gradient        T31 = Recovery-Exploit
-#     T24 = Detector-Aware-Mimicry     T32 = Sybil-Identity-Cycling
-#     T25 = Distributed-Influence      T33 = Collud-Honest-Majority
-#     T26 = Anti-Coordination          T34 = Consensus-Targeted
-#     T27 = Reputation-Camouflage      T35 = Multi-Vector-Adaptive
-#     T28 = Long-Horizon-Poisoning     T36 = Worst-Case-Coordinated
-#     T29 = Honest-Malicious-Switch
+#     T22 = True-Feedback-Adaptive   — observes rep feedback, self-adjusts
+#     T23 = Reputation-Gradient       — perturbation-probe to learn rep function
+#     T24 = Detector-Aware-Mimicry    — mimics honest mean/variance/model
+#     T25 = Distributed-Influence     — 100 nodes × small bias, collective push
+#     T26 = Anti-Coordination         — same goal, different predictions, avoid clustering
+#     T27 = Reputation-Camouflage     — cycles excellent/attack, aggregate rep management
+#     T28 = Long-Horizon-Poisoning    — 0.1% wrong over 5K/6K/7K steps
+#     T29 = Honest-to-Malicious-Switching — random mode switches, no periodic model
+#     T30 = Threshold-Boundary        — lives at threshold-ε, dynamic ε
+#     T31 = Reputation-Recovery-Exploit — cycles attack→recovery→attack
+#     T32 = Sybil-Identity-Cycling    — A degraded→B new→C new→... behavior transfer
+#     T33 = Collusion-Honest-Looking-Majority — 30% atk: 10% aggressive + 20% camouflage
+#     T34 = Consensus-Targeted        — optimizes |consensus_attacked - consensus_honest|
+#     T35 = Multi-Vector-Adaptive     — boss fight: picks best strategy dynamically
+#     T36 = Worst-Case-Coordinated    — perfect coordination, different predictions
 #
 # USAGE:
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #   .\RUN-TESTS-A.ps1
 #   .\RUN-TESTS-A.ps1 5        (run option 5 directly)
-#   .\RUN-TESTS-A.ps1 all      (run all batch tests)
-# ============================================================================
-
-# --- Self-elevate execution policy ---
-if ($PSVersionTable.PSVersion.Major -ge 5) {
-    $cp = Get-ExecutionPolicy -Scope Process -ErrorAction SilentlyContinue
-    if ($cp -eq 'Restricted' -or $cp -eq 'AllSigned') {
-        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue
-    }
-}
+# =============================================================================
 
 $ErrorActionPreference = "Continue"
 chcp 65001 > $null 2>&1
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
-# --- Find project folder (Cargo.toml) ---
+# --- Find project directory (Cargo.toml) ---
 $ProjectDir = $PSScriptRoot
-if (Test-Path "$ProjectDir\Cargo.toml") {
-    Set-Location $ProjectDir
-    $EngineDir = $ProjectDir
-} else {
-    Write-Host '  [INFO] No engine source. Using bin\ binary.' -ForegroundColor Yellow
-    $EngineDir = $null
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
+    $ProjectDir = (Get-Location).Path
+    for ($k = 0; $k -lt 5; $k++) {
+        if (Test-Path "$ProjectDir\Cargo.toml") { break }
+        $parent = Split-Path $ProjectDir -Parent
+        if ($parent -eq $ProjectDir) { break }
+        $ProjectDir = $parent
+    }
 }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3.1-FIXED' }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
+    Write-Host '  CRITICAL ERROR: Cannot find Cargo.toml!' -ForegroundColor Red
+    Write-Host '  Run the script FROM the project directory (where Cargo.toml is)' -ForegroundColor Yellow
+    Read-Host 'Press ENTER'; exit 1
+}
+Set-Location $ProjectDir
 
 $isWindows = $true
 if ($PSVersionTable.PSVersion.Major -ge 6) {
@@ -66,35 +84,37 @@ if ($PSVersionTable.PSVersion.Major -ge 6) {
 $exeExt = if ($isWindows) { '.exe' } else { '' }
 $sep = if ($isWindows) { '\' } else { '/' }
 
-$ResultsDir = Join-Path $PSScriptRoot 'tests\results-a'
+$ResultsDir = Join-Path $ProjectDir 'tests\results-a'
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
 $Timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $LogFile = "$ResultsDir\test-suite-a-$Timestamp.log"
 
+$NODES = 2664
+
 # --- Logging functions ---
 function Log($msg) { $msg | Tee-Object -FilePath $LogFile -Append }
 function LogInfo($msg) { Log "[INFO] $msg" }
-function LogSuccess($msg) { Log "[SUCCESS] $msg" }
+function LogSuccess($msg) { Log "[OK] $msg" }
 function LogError($msg) { Log "[ERROR] $msg" }
 
 # --- Main header ---
 function PrintHeader {
-    Write-Host ''
+    Write-Host ""
     Write-Host '================================================================' -ForegroundColor Cyan
-    Write-Host '= NeuroGraph ANGP v4.3-EXT -- TEST SUITE A                  =' -ForegroundColor Cyan
+    Write-Host '= NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A              =' -ForegroundColor Cyan
     Write-Host '= Security & Stress Tests                                   =' -ForegroundColor Cyan
     Write-Host '= 37 Attacker Types (T0-T36) | Behavioral Strategies        =' -ForegroundColor Cyan
-    Write-Host '= 2664 Nodes (333 shards x 8 nodes/shard)                   =' -ForegroundColor Cyan
+    Write-Host '= 2664 Nodes (333 shards x 8 nodes/shard)                  =' -ForegroundColor Cyan
     Write-Host '================================================================' -ForegroundColor Cyan
-    Write-Host ''
+    Write-Host ""
 }
 
 # --- Attacker type details ---
-function PrintAtackerTypes {
-    Write-Host ''
+function PrintAttackerTypes {
+    Write-Host ""
     Write-Host '  37 ATTACKER TYPES (T0-T36):' -ForegroundColor Yellow
-    Write-Host '  -----------------------------------------------------------' -ForegroundColor DarkGray
-    Write-Host '  T0-T15 (16 base):' -ForegroundColor White
+    Write-Host '  ─────────────────────────────────────────────────────────' -ForegroundColor DarkGray
+    Write-Host '  T0-T15 (16 basic):' -ForegroundColor White
     Write-Host '    T0  = Random              T8  = Progressive-Drift' -ForegroundColor Gray
     Write-Host '    T1  = Mimicry300          T9  = Outlier-Burst' -ForegroundColor Gray
     Write-Host '    T2  = Mimicry500          T10 = Clone-Copy' -ForegroundColor Gray
@@ -118,12 +138,12 @@ function PrintAtackerTypes {
     Write-Host '    T27 = Reputation-Camouflage      T35 = Multi-Vector-Adaptive' -ForegroundColor Gray
     Write-Host '    T28 = Long-Horizon-Poisoning     T36 = Worst-Case-Coordinated' -ForegroundColor Gray
     Write-Host '    T29 = Honest-Malicious-Switch' -ForegroundColor Gray
-    Write-Host '  -----------------------------------------------------------' -ForegroundColor DarkGray
-    Write-Host ''
+    Write-Host '  ─────────────────────────────────────────────────────────' -ForegroundColor DarkGray
+    Write-Host ""
 }
 
 function PrintBanner($title) {
-    Write-Host ''
+    Write-Host ""
     Write-Host '================================================================' -ForegroundColor Cyan
     Write-Host "= $title" -ForegroundColor Cyan
     Write-Host '================================================================' -ForegroundColor Cyan
@@ -131,160 +151,131 @@ function PrintBanner($title) {
 
 # --- Build / verify binary ---
 function EnsureBinary {
-    $binBinary = Join-Path $PSScriptRoot ("bin{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
-    if (Test-Path $binBinary) { return $binBinary }
-    if ($EngineDir) {
-        $binary = Join-Path $EngineDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
-        if (-not (Test-Path $binary)) {
-            LogInfo ('Binary not found: {0}' -f $binary)
-            LogInfo 'Building sim_stress_v43ext...'
-            Push-Location $EngineDir
-            cargo build --release --example sim_stress_v43ext 2>&1 | Tee-Object -FilePath $LogFile -Append
-            Pop-Location
-            if ($LASTEXITCODE -ne 0) { LogError 'Build FAILED!'; exit 1 }
-            LogSuccess 'Build completed!'
-        }
-        return $binary
+    Write-Host '[INFO] Checking binary...' -ForegroundColor DarkGray
+    Set-Location $ProjectDir
+    $buildOutput = cargo build --release --example sim_stress_v43ext 2>&1
+    $buildExit = $LASTEXITCODE
+    # Log everything to file, but only show errors on screen
+    $buildOutput | Add-Content -Path $LogFile
+    if ($buildExit -ne 0) {
+        Write-Host '[ERROR] Build failed!' -ForegroundColor Red
+        $buildOutput | Where-Object { $_ -match 'error' } | Write-Host
+        Add-Content -Path $LogFile -Value '[ERROR] Build failed!'
+        exit 1
     }
-    LogError 'No binary found. Run setup.ps1 first.'
-    exit 1
+    Write-Host '[OK] Binary ready.' -ForegroundColor Green
 }
 
 # --- Run individual test ---
 function RunStressTest($testName, $percent, $nodes, $steps) {
     $outputFile = "$ResultsDir\$testName-$Timestamp.txt"
+
     PrintBanner "Running: $testName"
-    LogInfo ('Params: --percent {0} --nodes {1} --steps {2}' -f $percent, $nodes, $steps)
-    LogInfo ('37 attacker types (T0-T36) distributed proportionally at {0}%' -f $percent)
-    $binary = EnsureBinary
+    LogInfo ("Params: --percent {0} --nodes {1} --steps {2}" -f $percent, $nodes, $steps)
+    if ($percent -gt 0) {
+        LogInfo ("37 attacker types (T0-T36) distributed proportionally at {0}%" -f $percent)
+    } else {
+        LogInfo 'Clean run — 0% attackers'
+    }
+
+    EnsureBinary
+    $binary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
+
     $startTime = Get-Date
+
     & $binary --percent $percent --nodes $nodes --steps $steps 2>&1 | Tee-Object -FilePath $outputFile
+
     $endTime = Get-Date
     $elapsed = ($endTime - $startTime).TotalSeconds
-    LogInfo ('Test finished in {0:N2}s' -f $elapsed)
+
+    LogInfo ("Test completed in {0:N2}s" -f $elapsed)
 }
 
 # ============================================================================
-# TEST OPTIONS -- 4 STEP SETS x 9 ATTACK LEVELS
+# TEST OPTIONS — INDIVIDUAL
 # ============================================================================
 
-function Option1 { PrintBanner 'OPTION 1: 10K STEPS -- Low ATTACK (10%)'; RunStressTest 'sec-10k-10pct' 10 $NODES 10000 }
-function Option2 { PrintBanner 'OPTION 2: 10K STEPS -- Moderate ATTACK (20%)'; RunStressTest 'sec-10k-20pct' 20 $NODES 10000 }
-function Option3 { PrintBanner 'OPTION 3: 10K STEPS -- Medium ATTACK (30%)'; RunStressTest 'sec-10k-30pct' 30 $NODES 10000 }
-function Option4 { PrintBanner 'OPTION 4: 10K STEPS -- Significant ATTACK (40%)'; RunStressTest 'sec-10k-40pct' 40 $NODES 10000 }
-function Option5 { PrintBanner 'OPTION 5: 10K STEPS -- High ATTACK (50%)'; RunStressTest 'sec-10k-50pct' 50 $NODES 10000 }
-function Option6 { PrintBanner 'OPTION 6: 10K STEPS -- Intense ATTACK (60%)'; RunStressTest 'sec-10k-60pct' 60 $NODES 10000 }
-function Option7 { PrintBanner 'OPTION 7: 10K STEPS -- Severe ATTACK (70%)'; RunStressTest 'sec-10k-70pct' 70 $NODES 10000 }
-function Option8 { PrintBanner 'OPTION 8: 10K STEPS -- Critical ATTACK (80%)'; RunStressTest 'sec-10k-80pct' 80 $NODES 10000 }
-function Option9 { PrintBanner 'OPTION 9: 10K STEPS -- Extreme ATTACK (90%)'; RunStressTest 'sec-10k-90pct' 90 $NODES 10000 }
-function Option11 { PrintBanner 'OPTION 11: 30K STEPS -- Low ATTACK (10%)'; RunStressTest 'sec-30k-10pct' 10 $NODES 30000 }
-function Option12 { PrintBanner 'OPTION 12: 30K STEPS -- Moderate ATTACK (20%)'; RunStressTest 'sec-30k-20pct' 20 $NODES 30000 }
-function Option13 { PrintBanner 'OPTION 13: 30K STEPS -- Medium ATTACK (30%)'; RunStressTest 'sec-30k-30pct' 30 $NODES 30000 }
-function Option14 { PrintBanner 'OPTION 14: 30K STEPS -- Significant ATTACK (40%)'; RunStressTest 'sec-30k-40pct' 40 $NODES 30000 }
-function Option15 { PrintBanner 'OPTION 15: 30K STEPS -- High ATTACK (50%)'; RunStressTest 'sec-30k-50pct' 50 $NODES 30000 }
-function Option16 { PrintBanner 'OPTION 16: 30K STEPS -- Intense ATTACK (60%)'; RunStressTest 'sec-30k-60pct' 60 $NODES 30000 }
-function Option17 { PrintBanner 'OPTION 17: 30K STEPS -- Severe ATTACK (70%)'; RunStressTest 'sec-30k-70pct' 70 $NODES 30000 }
-function Option18 { PrintBanner 'OPTION 18: 30K STEPS -- Critical ATTACK (80%)'; RunStressTest 'sec-30k-80pct' 80 $NODES 30000 }
-function Option19 { PrintBanner 'OPTION 19: 30K STEPS -- Extreme ATTACK (90%)'; RunStressTest 'sec-30k-90pct' 90 $NODES 30000 }
-function Option21 { PrintBanner 'OPTION 21: 50K STEPS -- Low ATTACK (10%)'; RunStressTest 'sec-50k-10pct' 10 $NODES 50000 }
-function Option22 { PrintBanner 'OPTION 22: 50K STEPS -- Moderate ATTACK (20%)'; RunStressTest 'sec-50k-20pct' 20 $NODES 50000 }
-function Option23 { PrintBanner 'OPTION 23: 50K STEPS -- Medium ATTACK (30%)'; RunStressTest 'sec-50k-30pct' 30 $NODES 50000 }
-function Option24 { PrintBanner 'OPTION 24: 50K STEPS -- Significant ATTACK (40%)'; RunStressTest 'sec-50k-40pct' 40 $NODES 50000 }
-function Option25 { PrintBanner 'OPTION 25: 50K STEPS -- High ATTACK (50%)'; RunStressTest 'sec-50k-50pct' 50 $NODES 50000 }
-function Option26 { PrintBanner 'OPTION 26: 50K STEPS -- Intense ATTACK (60%)'; RunStressTest 'sec-50k-60pct' 60 $NODES 50000 }
-function Option27 { PrintBanner 'OPTION 27: 50K STEPS -- Severe ATTACK (70%)'; RunStressTest 'sec-50k-70pct' 70 $NODES 50000 }
-function Option28 { PrintBanner 'OPTION 28: 50K STEPS -- Critical ATTACK (80%)'; RunStressTest 'sec-50k-80pct' 80 $NODES 50000 }
-function Option29 { PrintBanner 'OPTION 29: 50K STEPS -- Extreme ATTACK (90%)'; RunStressTest 'sec-50k-90pct' 90 $NODES 50000 }
-function Option31 { PrintBanner 'OPTION 31: 100K STEPS -- Low ATTACK (10%)'; RunStressTest 'sec-100k-10pct' 10 $NODES 100000 }
-function Option32 { PrintBanner 'OPTION 32: 100K STEPS -- Moderate ATTACK (20%)'; RunStressTest 'sec-100k-20pct' 20 $NODES 100000 }
-function Option33 { PrintBanner 'OPTION 33: 100K STEPS -- Medium ATTACK (30%)'; RunStressTest 'sec-100k-30pct' 30 $NODES 100000 }
-function Option34 { PrintBanner 'OPTION 34: 100K STEPS -- Significant ATTACK (40%)'; RunStressTest 'sec-100k-40pct' 40 $NODES 100000 }
-function Option35 { PrintBanner 'OPTION 35: 100K STEPS -- High ATTACK (50%)'; RunStressTest 'sec-100k-50pct' 50 $NODES 100000 }
-function Option36 { PrintBanner 'OPTION 36: 100K STEPS -- Intense ATTACK (60%)'; RunStressTest 'sec-100k-60pct' 60 $NODES 100000 }
-function Option37 { PrintBanner 'OPTION 37: 100K STEPS -- Severe ATTACK (70%)'; RunStressTest 'sec-100k-70pct' 70 $NODES 100000 }
-function Option38 { PrintBanner 'OPTION 38: 100K STEPS -- Critical ATTACK (80%)'; RunStressTest 'sec-100k-80pct' 80 $NODES 100000 }
-function Option39 { PrintBanner 'OPTION 39: 100K STEPS -- Extreme ATTACK (90%)'; RunStressTest 'sec-100k-90pct' 90 $NODES 100000 }
+# ── 10K STEPS ──────────────────────────────────────────────────────────────
+function Option1  { PrintBanner '10K STEPS + 10% ATTACK';  RunStressTest '10k-10pct'  10 $NODES 10000 }
+function Option2  { PrintBanner '10K STEPS + 20% ATTACK';  RunStressTest '10k-20pct'  20 $NODES 10000 }
+function Option3  { PrintBanner '10K STEPS + 30% ATTACK';  RunStressTest '10k-30pct'  30 $NODES 10000 }
+function Option4  { PrintBanner '10K STEPS + 40% ATTACK';  RunStressTest '10k-40pct'  40 $NODES 10000 }
+function Option5  { PrintBanner '10K STEPS + 50% ATTACK';  RunStressTest '10k-50pct'  50 $NODES 10000 }
+function Option6  { PrintBanner '10K STEPS + 60% ATTACK';  RunStressTest '10k-60pct'  60 $NODES 10000 }
+function Option7  { PrintBanner '10K STEPS + 70% ATTACK';  RunStressTest '10k-70pct'  70 $NODES 10000 }
+function Option8  { PrintBanner '10K STEPS + 80% ATTACK';  RunStressTest '10k-80pct'  80 $NODES 10000 }
+function Option9  { PrintBanner '10K STEPS + 90% ATTACK';  RunStressTest '10k-90pct'  90 $NODES 10000 }
 
-function Option41 { PrintBanner 'OPTION 41: CLEAN RUN -- 10K STEPS (0% attackers)'; RunStressTest 'clean-10k-steps' 0 $NODES 10000 }
-function Option42 { PrintBanner 'OPTION 42: CLEAN RUN -- 30K STEPS (0% attackers)'; RunStressTest 'clean-30k-steps' 0 $NODES 30000 }
-function Option43 { PrintBanner 'OPTION 43: CLEAN RUN -- 50K STEPS (0% attackers)'; RunStressTest 'clean-50k-steps' 0 $NODES 50000 }
-function Option44 { PrintBanner 'OPTION 44: CLEAN RUN -- 100K STEPS (0% attackers)'; RunStressTest 'clean-100k-steps' 0 $NODES 100000 }
+# ── 30K STEPS ──────────────────────────────────────────────────────────────
+function Option10 { PrintBanner '30K STEPS + 10% ATTACK';  RunStressTest '30k-10pct'  10 $NODES 30000 }
+function Option11 { PrintBanner '30K STEPS + 20% ATTACK';  RunStressTest '30k-20pct'  20 $NODES 30000 }
+function Option12 { PrintBanner '30K STEPS + 30% ATTACK';  RunStressTest '30k-30pct'  30 $NODES 30000 }
+function Option13 { PrintBanner '30K STEPS + 40% ATTACK';  RunStressTest '30k-40pct'  40 $NODES 30000 }
+function Option14 { PrintBanner '30K STEPS + 50% ATTACK';  RunStressTest '30k-50pct'  50 $NODES 30000 }
+function Option15 { PrintBanner '30K STEPS + 60% ATTACK';  RunStressTest '30k-60pct'  60 $NODES 30000 }
+function Option16 { PrintBanner '30K STEPS + 70% ATTACK';  RunStressTest '30k-70pct'  70 $NODES 30000 }
+function Option17 { PrintBanner '30K STEPS + 80% ATTACK';  RunStressTest '30k-80pct'  80 $NODES 30000 }
+function Option18 { PrintBanner '30K STEPS + 90% ATTACK';  RunStressTest '30k-90pct'  90 $NODES 30000 }
 
-# --- Custom option ---
+# ── 50K STEPS ──────────────────────────────────────────────────────────────
+function Option19 { PrintBanner '50K STEPS + 10% ATTACK';  RunStressTest '50k-10pct'  10 $NODES 50000 }
+function Option20 { PrintBanner '50K STEPS + 20% ATTACK';  RunStressTest '50k-20pct'  20 $NODES 50000 }
+function Option21 { PrintBanner '50K STEPS + 30% ATTACK';  RunStressTest '50k-30pct'  30 $NODES 50000 }
+function Option22 { PrintBanner '50K STEPS + 40% ATTACK';  RunStressTest '50k-40pct'  40 $NODES 50000 }
+function Option23 { PrintBanner '50K STEPS + 50% ATTACK';  RunStressTest '50k-50pct'  50 $NODES 50000 }
+function Option24 { PrintBanner '50K STEPS + 60% ATTACK';  RunStressTest '50k-60pct'  60 $NODES 50000 }
+function Option25 { PrintBanner '50K STEPS + 70% ATTACK';  RunStressTest '50k-70pct'  70 $NODES 50000 }
+function Option26 { PrintBanner '50K STEPS + 80% ATTACK';  RunStressTest '50k-80pct'  80 $NODES 50000 }
+function Option27 { PrintBanner '50K STEPS + 90% ATTACK';  RunStressTest '50k-90pct'  90 $NODES 50000 }
+
+# ── 100K STEPS ─────────────────────────────────────────────────────────────
+function Option28 { PrintBanner '100K STEPS + 10% ATTACK'; RunStressTest '100k-10pct' 10 $NODES 100000 }
+function Option29 { PrintBanner '100K STEPS + 20% ATTACK'; RunStressTest '100k-20pct' 20 $NODES 100000 }
+function Option30 { PrintBanner '100K STEPS + 30% ATTACK'; RunStressTest '100k-30pct' 30 $NODES 100000 }
+function Option31 { PrintBanner '100K STEPS + 40% ATTACK'; RunStressTest '100k-40pct' 40 $NODES 100000 }
+function Option32 { PrintBanner '100K STEPS + 50% ATTACK'; RunStressTest '100k-50pct' 50 $NODES 100000 }
+function Option33 { PrintBanner '100K STEPS + 60% ATTACK'; RunStressTest '100k-60pct' 60 $NODES 100000 }
+function Option34 { PrintBanner '100K STEPS + 70% ATTACK'; RunStressTest '100k-70pct' 70 $NODES 100000 }
+function Option35 { PrintBanner '100K STEPS + 80% ATTACK'; RunStressTest '100k-80pct' 80 $NODES 100000 }
+function Option36 { PrintBanner '100K STEPS + 90% ATTACK'; RunStressTest '100k-90pct' 90 $NODES 100000 }
+
+# ── CLEAN (0% attackers) ──────────────────────────────────────────────────
+function Option40 { PrintBanner 'CLEAN — 10K STEPS (0% attackers)';  RunStressTest 'clean-10k'  0 $NODES 10000 }
+function Option41 { PrintBanner 'CLEAN — 30K STEPS (0% attackers)';  RunStressTest 'clean-30k'  0 $NODES 30000 }
+function Option42 { PrintBanner 'CLEAN — 50K STEPS (0% attackers)';  RunStressTest 'clean-50k'  0 $NODES 50000 }
+function Option43 { PrintBanner 'CLEAN — 100K STEPS (0% attackers)'; RunStressTest 'clean-100k' 0 $NODES 100000 }
+
+# ── CUSTOM ─────────────────────────────────────────────────────────────────
 function Option50 {
-    PrintBanner 'OPTION 50: CUSTOM -- Configure everything manually'
+    PrintBanner 'CUSTOM — Set parameters'
     Write-Host ''
-    Write-Host '  Configure test parameters:' -ForegroundColor Yellow
+    Write-Host '  Set Steps (simulation step count):' -ForegroundColor Yellow
+    Write-Host '  Examples: 500, 10000, 30000, 50000, 100000, 500000' -ForegroundColor DarkGray
+    Write-Host '  Steps: ' -NoNewline
+    $customSteps = Read-Host
+    if (-not $customSteps -or $customSteps -notmatch '^\d+$' -or [int]$customSteps -lt 1) {
+        LogError 'Invalid steps — must be a positive integer'
+        return
+    }
     Write-Host ''
-    $cNodes = Read-Host '  Nodes [default: 2664]'
-    $cSteps = Read-Host '  Steps [default: 10000]'
-    $cPercent = Read-Host '  Attackers % (0-99) [default: 10]'
-    if (-not $cNodes) { $cNodes = 2664 }
-    if (-not $cSteps) { $cSteps = 10000 }
-    if (-not $cPercent) { $cPercent = 10 }
-    try { $cNodes = [int]$cNodes } catch { LogError 'Invalid nodes!'; return }
-    try { $cSteps = [int]$cSteps } catch { LogError 'Invalid steps!'; return }
-    try { $cPercent = [int]$cPercent } catch { LogError 'Invalid percent!'; return }
-    if ($cNodes -lt 1) { LogError 'Nodes: minimum 1'; return }
-    if ($cSteps -lt 1) { LogError 'Steps: minimum 1'; return }
-    if ($cPercent -lt 0 -or $cPercent -gt 99) { LogError 'Percent: must be 0-99'; return }
-    $testName = 'custom-{0}n-{1}s-{2}pct' -f $cNodes, $cSteps, $cPercent
-    RunStressTest $testName $cPercent $cNodes $cSteps
-}
-
-# --- Quick tests (500 steps) ---
-function Option51 { PrintBanner 'OPTION 51: QUICK 10% atk (500 steps)'; RunStressTest 'quick-10pct' 10 $NODES 500 }
-function Option52 { PrintBanner 'OPTION 52: QUICK 20% atk (500 steps)'; RunStressTest 'quick-20pct' 20 $NODES 500 }
-function Option53 { PrintBanner 'OPTION 53: QUICK 50% atk (500 steps)'; RunStressTest 'quick-50pct' 50 $NODES 500 }
-
-# --- Batch: 10K all 10%-90% ---
-function Option60 {
-    PrintBanner 'OPTION 60: BATCH 10K -- All levels 10%-90%'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) {
-        RunStressTest ('batch-10k-{0}pct' -f $p) $p $NODES 10000
+    Write-Host '  Set Attacker density (0-99%):' -ForegroundColor Yellow
+    Write-Host '  0 = clean run (no attackers)' -ForegroundColor DarkGray
+    Write-Host '  10 = 10% attackers ... 90 = 90% attackers' -ForegroundColor DarkGray
+    Write-Host '  Density (%): ' -NoNewline
+    $customPercent = Read-Host
+    if (-not $customPercent -or $customPercent -notmatch '^\d+$' -or [int]$customPercent -lt 0 -or [int]$customPercent -gt 99) {
+        LogError 'Invalid density — must be between 0 and 99'
+        return
     }
-    LogSuccess 'Batch 10K complete'
-}
-
-# --- Batch: 30K all 10%-90% ---
-function Option61 {
-    PrintBanner 'OPTION 61: BATCH 30K -- All levels 10%-90%'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) {
-        RunStressTest ('batch-30k-{0}pct' -f $p) $p $NODES 30000
+    $customSteps = [int]$customSteps
+    $customPercent = [int]$customPercent
+    $testLabel = "custom-${customSteps}s-${customPercent}pct"
+    if ($customPercent -eq 0) {
+        PrintBanner "CUSTOM: $customSteps steps — CLEAN (0% attackers)"
+    } else {
+        PrintBanner "CUSTOM: $customSteps steps + $customPercent% attack"
     }
-    LogSuccess 'Batch 30K complete'
-}
-
-# --- Batch: 50K all 10%-90% ---
-function Option62 {
-    PrintBanner 'OPTION 62: BATCH 50K -- All levels 10%-90%'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) {
-        RunStressTest ('batch-50k-{0}pct' -f $p) $p $NODES 50000
-    }
-    LogSuccess 'Batch 50K complete'
-}
-
-# --- Batch: 100K all 10%-90% ---
-function Option63 {
-    PrintBanner 'OPTION 63: BATCH 100K -- All levels 10%-90%'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) {
-        RunStressTest ('batch-100k-{0}pct' -f $p) $p $NODES 100000
-    }
-    LogSuccess 'Batch 100K complete'
-}
-
-# --- Batch: COMPLETE -- all 4 step sets x all 9 levels ---
-function Option64 {
-    PrintBanner 'OPTION 64: FULL BATCH -- 4 sets x 9 levels = 36 tests'
-    LogInfo '10K steps...'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) { RunStressTest ('full-10k-{0}pct' -f $p) $p $NODES 10000 }
-    LogInfo '30K steps...'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) { RunStressTest ('full-30k-{0}pct' -f $p) $p $NODES 30000 }
-    LogInfo '50K steps...'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) { RunStressTest ('full-50k-{0}pct' -f $p) $p $NODES 50000 }
-    LogInfo '100K steps...'
-    foreach ($p in @(10,20,30,40,50,60,70,80,90)) { RunStressTest ('full-100k-{0}pct' -f $p) $p $NODES 100000 }
-    LogSuccess 'Full batch (36 tests) complete!'
+    RunStressTest $testLabel $customPercent $NODES $customSteps
 }
 
 # ============================================================================
@@ -292,75 +283,44 @@ function Option64 {
 # ============================================================================
 
 function ShowMenu {
-    Write-Host ''
+    Write-Host ""
     Write-Host '================================================================' -ForegroundColor White
-    Write-Host '=   NeuroGraph ANGP v4.3-EXT -- TEST SUITE A -- MENU        =' -ForegroundColor White
+    Write-Host '=   NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A — MENU    =' -ForegroundColor White
     Write-Host '=   37 Attacker Types (T0-T36) | Behavioral Strategies     =' -ForegroundColor White
-    Write-Host '=   2664 Nodes (333 shards x 8 nodes/shard)                 =' -ForegroundColor White
+    Write-Host '=   2664 Nodes (333 shards x 8 nodes/shard)                =' -ForegroundColor White
     Write-Host '================================================================' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  10K STEPS (10,000 steps, 37 atk types T0-T36)' -ForegroundColor Yellow
-    Write-Host '     1)  Low            (10%)' -ForegroundColor White
-    Write-Host '     2)  Moderate       (20%)' -ForegroundColor White
-    Write-Host '     3)  Medium         (30%)' -ForegroundColor White
-    Write-Host '     4)  Significant    (40%)' -ForegroundColor White
-    Write-Host '     5)  High           (50%)' -ForegroundColor White
-    Write-Host '     6)  Intense        (60%)' -ForegroundColor White
-    Write-Host '     7)  Severe         (70%)' -ForegroundColor White
-    Write-Host '     8)  Critical       (80%)' -ForegroundColor White
-    Write-Host '     9)  Extreme        (90%)' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  30K STEPS (30,000 steps, 37 atk types T0-T36)' -ForegroundColor Yellow
-    Write-Host '    11)  Low            (10%)' -ForegroundColor White
-    Write-Host '    12)  Moderate       (20%)' -ForegroundColor White
-    Write-Host '    13)  Medium         (30%)' -ForegroundColor White
-    Write-Host '    14)  Significant    (40%)' -ForegroundColor White
-    Write-Host '    15)  High           (50%)' -ForegroundColor White
-    Write-Host '    16)  Intense        (60%)' -ForegroundColor White
-    Write-Host '    17)  Severe         (70%)' -ForegroundColor White
-    Write-Host '    18)  Critical       (80%)' -ForegroundColor White
-    Write-Host '    19)  Extreme        (90%)' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  50K STEPS (50,000 steps, 37 atk types T0-T36)' -ForegroundColor Yellow
-    Write-Host '    21)  Low            (10%)' -ForegroundColor White
-    Write-Host '    22)  Moderate       (20%)' -ForegroundColor White
-    Write-Host '    23)  Medium         (30%)' -ForegroundColor White
-    Write-Host '    24)  Significant    (40%)' -ForegroundColor White
-    Write-Host '    25)  High           (50%)' -ForegroundColor White
-    Write-Host '    26)  Intense        (60%)' -ForegroundColor White
-    Write-Host '    27)  Severe         (70%)' -ForegroundColor White
-    Write-Host '    28)  Critical       (80%)' -ForegroundColor White
-    Write-Host '    29)  Extreme        (90%)' -ForegroundColor White
-    Write-Host ''
-    Write-Host ' 100K STEPS (100,000 steps, 37 atk types T0-T36)' -ForegroundColor Yellow
-    Write-Host '    31)  Low            (10%)' -ForegroundColor White
-    Write-Host '    32)  Moderate       (20%)' -ForegroundColor White
-    Write-Host '    33)  Medium         (30%)' -ForegroundColor White
-    Write-Host '    34)  Significant    (40%)' -ForegroundColor White
-    Write-Host '    35)  High           (50%)' -ForegroundColor White
-    Write-Host '    36)  Intense        (60%)' -ForegroundColor White
-    Write-Host '    37)  Severe         (70%)' -ForegroundColor White
-    Write-Host '    38)  Critical       (80%)' -ForegroundColor White
-    Write-Host '    39)  Extreme        (90%)' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  CLEAN (0% attackers)' -ForegroundColor Green
-    Write-Host '    41) Clean 10K     42) Clean 30K     43) Clean 50K     44) Clean 100K' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  CUSTOM' -ForegroundColor Cyan
-    Write-Host '    50) Custom (nodes, steps, attack 0-99%)' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  QUICK (500 steps, fast check)' -ForegroundColor Cyan
-    Write-Host '    51) Quick 10%    52) Quick 20%    53) Quick 50%' -ForegroundColor White
-    Write-Host ''
-    Write-Host '  BATCH' -ForegroundColor Magenta
-    Write-Host '    60) Batch 10K (9 tests)    61) Batch 30K (9 tests)' -ForegroundColor White
-    Write-Host '    62) Batch 50K (9 tests)    63) Batch 100K (9 tests)' -ForegroundColor White
-    Write-Host '    64) Full Batch (36 tests: 4 sets x 9 levels)' -ForegroundColor White
-    Write-Host ''
-    Write-Host '    99) Show 37 attacker types (T0-T36)' -ForegroundColor DarkCyan
-    Write-Host '     0) Exit' -ForegroundColor DarkGray
-    Write-Host ''
-    Write-Host 'Choose option: ' -NoNewline
+    Write-Host ""
+    Write-Host '  10K STEPS + ATTACKERS                                       ' -ForegroundColor Yellow
+    Write-Host '     1) 10K + 10%     2) 10K + 20%     3) 10K + 30%'
+    Write-Host '     4) 10K + 40%     5) 10K + 50%     6) 10K + 60%'
+    Write-Host '     7) 10K + 70%     8) 10K + 80%     9) 10K + 90%'
+    Write-Host ""
+    Write-Host '  30K STEPS + ATTACKERS                                       ' -ForegroundColor Yellow
+    Write-Host '    10) 30K + 10%    11) 30K + 20%    12) 30K + 30%'
+    Write-Host '    13) 30K + 40%    14) 30K + 50%    15) 30K + 60%'
+    Write-Host '    16) 30K + 70%    17) 30K + 80%    18) 30K + 90%'
+    Write-Host ""
+    Write-Host '  50K STEPS + ATTACKERS                                       ' -ForegroundColor Yellow
+    Write-Host '    19) 50K + 10%    20) 50K + 20%    21) 50K + 30%'
+    Write-Host '    22) 50K + 40%    23) 50K + 50%    24) 50K + 60%'
+    Write-Host '    25) 50K + 70%    26) 50K + 80%    27) 50K + 90%'
+    Write-Host ""
+    Write-Host '  100K STEPS + ATTACKERS                                      ' -ForegroundColor Yellow
+    Write-Host '    28) 100K + 10%   29) 100K + 20%   30) 100K + 30%'
+    Write-Host '    31) 100K + 40%   32) 100K + 50%   33) 100K + 60%'
+    Write-Host '    34) 100K + 70%   35) 100K + 80%   36) 100K + 90%'
+    Write-Host ""
+    Write-Host '  CLEAN (0% attackers — no attack simulation)                 ' -ForegroundColor Green
+    Write-Host '    40) Clean 10K     41) Clean 30K     42) Clean 50K'
+    Write-Host '    43) Clean 100K'
+    Write-Host ""
+    Write-Host '  CUSTOM                                                      ' -ForegroundColor Cyan
+    Write-Host '    50) Custom — set steps + attacker density (0-99%)'
+    Write-Host ""
+    Write-Host '    99) Show 37 attacker types (T0-T36)'
+    Write-Host '     0) Exit'
+    Write-Host ""
+    Write-Host 'Select option [0-50, 99]: ' -NoNewline
 }
 
 # ============================================================================
@@ -370,23 +330,21 @@ function ShowMenu {
 PrintHeader
 EnsureBinary | Out-Null
 Write-Host '  Binary ready.' -ForegroundColor Green
-Write-Host ('  Results saved to: {0}' -f $ResultsDir) -ForegroundColor DarkGray
-Write-Host ''
-
-$NODES = 2664
+Write-Host ""
 
 # If argument given on command line, run directly
 if ($args.Count -gt 0) {
     switch ($args[0]) {
-        '1' { Option1; break }
-        '2' { Option2; break }
-        '3' { Option3; break }
-        '4' { Option4; break }
-        '5' { Option5; break }
-        '6' { Option6; break }
-        '7' { Option7; break }
-        '8' { Option8; break }
-        '9' { Option9; break }
+        '1'  { Option1; break }
+        '2'  { Option2; break }
+        '3'  { Option3; break }
+        '4'  { Option4; break }
+        '5'  { Option5; break }
+        '6'  { Option6; break }
+        '7'  { Option7; break }
+        '8'  { Option8; break }
+        '9'  { Option9; break }
+        '10' { Option10; break }
         '11' { Option11; break }
         '12' { Option12; break }
         '13' { Option13; break }
@@ -396,6 +354,7 @@ if ($args.Count -gt 0) {
         '17' { Option17; break }
         '18' { Option18; break }
         '19' { Option19; break }
+        '20' { Option20; break }
         '21' { Option21; break }
         '22' { Option22; break }
         '23' { Option23; break }
@@ -405,31 +364,20 @@ if ($args.Count -gt 0) {
         '27' { Option27; break }
         '28' { Option28; break }
         '29' { Option29; break }
+        '30' { Option30; break }
         '31' { Option31; break }
         '32' { Option32; break }
         '33' { Option33; break }
         '34' { Option34; break }
         '35' { Option35; break }
         '36' { Option36; break }
-        '37' { Option37; break }
-        '38' { Option38; break }
-        '39' { Option39; break }
+        '40' { Option40; break }
         '41' { Option41; break }
         '42' { Option42; break }
         '43' { Option43; break }
-        '44' { Option44; break }
         '50' { Option50; break }
-        '51' { Option51; break }
-        '52' { Option52; break }
-        '53' { Option53; break }
-        '60' { Option60; break }
-        '61' { Option61; break }
-        '62' { Option62; break }
-        '63' { Option63; break }
-        '64' { Option64; break }
-        '99' { PrintAtackerTypes; break }
-        'all'{ Option64; break }
-        default { LogError ('Invalid option: {0}' -f $args[0]) }
+        '99' { PrintAttackerTypes; break }
+        default { LogError ("Invalid option: {0}" -f $args[0]); ShowMenu }
     }
     return
 }
@@ -441,15 +389,16 @@ while ($true) {
 
     switch ($choice) {
         '0'  { LogInfo 'Exiting...'; exit 0 }
-        '1' { Option1 }
-        '2' { Option2 }
-        '3' { Option3 }
-        '4' { Option4 }
-        '5' { Option5 }
-        '6' { Option6 }
-        '7' { Option7 }
-        '8' { Option8 }
-        '9' { Option9 }
+        '1'  { Option1 }
+        '2'  { Option2 }
+        '3'  { Option3 }
+        '4'  { Option4 }
+        '5'  { Option5 }
+        '6'  { Option6 }
+        '7'  { Option7 }
+        '8'  { Option8 }
+        '9'  { Option9 }
+        '10' { Option10 }
         '11' { Option11 }
         '12' { Option12 }
         '13' { Option13 }
@@ -459,6 +408,7 @@ while ($true) {
         '17' { Option17 }
         '18' { Option18 }
         '19' { Option19 }
+        '20' { Option20 }
         '21' { Option21 }
         '22' { Option22 }
         '23' { Option23 }
@@ -468,33 +418,22 @@ while ($true) {
         '27' { Option27 }
         '28' { Option28 }
         '29' { Option29 }
+        '30' { Option30 }
         '31' { Option31 }
         '32' { Option32 }
         '33' { Option33 }
         '34' { Option34 }
         '35' { Option35 }
         '36' { Option36 }
-        '37' { Option37 }
-        '38' { Option38 }
-        '39' { Option39 }
+        '40' { Option40 }
         '41' { Option41 }
         '42' { Option42 }
         '43' { Option43 }
-        '44' { Option44 }
         '50' { Option50 }
-        '51' { Option51 }
-        '52' { Option52 }
-        '53' { Option53 }
-        '60' { Option60 }
-        '61' { Option61 }
-        '62' { Option62 }
-        '63' { Option63 }
-        '64' { Option64 }
-        '99' { PrintAtackerTypes }
-        default { LogError ('Invalid option: {0}' -f $choice) }
+        '99' { PrintAttackerTypes }
+        default { LogError ("Invalid option: {0}" -f $choice) }
     }
 
-    Write-Host ''
+    Write-Host ""
     Read-Host 'Press Enter to continue...'
 }
-

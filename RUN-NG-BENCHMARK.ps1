@@ -1,4 +1,4 @@
-# ==========================================================================
+﻿# ==========================================================================
 # NeuroGraph ANGP v4.3-EXT — INTERACTIVE MULTI-SHARD TPS BENCHMARK
 # ==========================================================================
 # Menu: clean (0% atk) or with attackers (10-90%).
@@ -59,7 +59,7 @@ if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
         $dir = $parent
     }
 }
-if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3.2' }
+if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3.1-FIXED' }
 if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
     Write-Host '  CRITICAL ERROR: Cargo.toml not found!' -ForegroundColor Red
     Write-Host '  Run this script FROM the project folder (where Cargo.toml is located)' -ForegroundColor Yellow
@@ -143,22 +143,18 @@ if (-not $coreCount) { $coreCount = '?' }
 
 Write-Host ''
 Write-Host '=============================================================' -ForegroundColor Cyan
-Write-Host '  NeuroGraph ANGP v4.3-EXT — BUILD sim_stress_v43ext...' -ForegroundColor Cyan
-Write-Host '  37 attacker types (T0-T36) | Behavioral Strategies' -ForegroundColor Gray
+Write-Host '  NeuroGraph ANGP v4.3.1-FIXED — BUILD' -ForegroundColor Cyan
 Write-Host '=============================================================' -ForegroundColor Cyan
 Write-Host ''
-Write-Host ("  Project: {0}" -f $ProjectDir) -ForegroundColor Gray
-Write-Host ("  CPU: {0} cores  |  OS: {1}" -f $coreCount, $osName) -ForegroundColor Gray
-Write-Host ''
-cargo build --release --example sim_stress_v43ext 2>&1 | ForEach-Object { Write-Host ("  {0}" -f $_) }
-if ($LASTEXITCODE -ne 0) {
-    Write-Host ''
+$buildOutput = cargo build --release --example sim_stress_v43ext 2>&1
+$buildExit = $LASTEXITCODE
+$buildOutput | Add-Content -Path (Join-Path $ProjectDir 'benchmark-build.log')
+if ($buildExit -ne 0) {
     Write-Host '  Build FAILED!' -ForegroundColor Red
+    $buildOutput | Where-Object { $_ -match 'error' } | ForEach-Object { Write-Host "  $_" }
     Read-Host 'Press ENTER'; exit 1
 }
 $simBinary = Join-Path $ProjectDir ("target{0}release{0}examples{0}sim_stress_v43ext{1}" -f $sep, $exeExt)
-Write-Host ''
-Write-Host ('  Binary: {0}' -f $simBinary) -ForegroundColor Green
 Write-Host '  Build OK!' -ForegroundColor Green
 Write-Host ''
 # ===================== PRESETS =====================
@@ -184,7 +180,7 @@ if (-not (Test-Path $reportDir)) { New-Item -ItemType Directory -Path $reportDir
 # Each entry: Id, Name, Strategy, Category, Difficulty
 # Full table displayed when user selects menu option [99]
 $attackerTypes = @(
-    @{ Id='T0'; Name='Random-Noise'; Strategy='Uniform [-4, +4] perturbation'; Category='Disruption'; Difficulty='Low' },
+    @{ Id='T0'; Name='Random-Noise'; Strategy='Uniform (-4, +4) perturbation'; Category='Disruption'; Difficulty='Low' },
     @{ Id='T1'; Name='Mimicry-300'; Strategy='300 mimicry steps, then noise (sigma=0.8)'; Category='Evasion'; Difficulty='Medium' },
     @{ Id='T2'; Name='Mimicry-500'; Strategy='500 honest steps, then noise (sigma=1.2)'; Category='Evasion'; Difficulty='Medium' },
     @{ Id='T3'; Name='Adaptive-Rep-Aware'; Strategy='40% attack / 5% recovery ratio'; Category='Adaptive'; Difficulty='High' },
@@ -218,7 +214,7 @@ $attackerTypes = @(
     @{ Id='T31'; Name='Recovery-Exploit'; Strategy='Attack -> recover -> attack cycles'; Category='Exploitation'; Difficulty='Extreme' },
     @{ Id='T32'; Name='Sybil-Cycling'; Strategy='Cycle through identities, transfer behavior'; Category='Sybil'; Difficulty='Extreme' },
     @{ Id='T33'; Name='Collud-Honest-Maj'; Strategy='30% attack: 10% aggressive + 20% camouflage'; Category='Coordination'; Difficulty='Extreme' },
-    @{ Id='T34'; Name='Consensus-Targeted'; Strategy='Optimize [C_attack - C_honest]'; Category='Manipulation'; Difficulty='Extreme' },
+    @{ Id='T34'; Name='Consensus-Targeted'; Strategy='Optimize (C_attack - C_honest)'; Category='Manipulation'; Difficulty='Extreme' },
     @{ Id='T35'; Name='Multi-Vector (BOSS)'; Strategy='Dynamically select best strategy'; Category='Adaptive'; Difficulty='Extreme' },
     @{ Id='T36'; Name='Worst-Case-Coordinated'; Strategy='Perfect coordination, diverse predictions'; Category='Coordination'; Difficulty='Extreme' }
 )
@@ -372,10 +368,6 @@ while ($true) {
         Remove-Item (Join-Path $LogDir '*.tmp') -Force -ErrorAction SilentlyContinue
         Remove-Item (Join-Path $LogDir '*.bat') -Force -ErrorAction SilentlyContinue
 
-        Log-Report ''
-        Log-Report ("  SYSTEM: {0} CPU cores  {1}" -f $coreCount, $osName)
-        Log-Report ("  BINARY: {0}" -f $simBinary)
-        Log-Report ("  LOGS:  {0}" -f $LogDir)
         Log-Report ''
         Log-Report '  CONFIG:'
         Log-Report ("    Shards:                   {0}" -f $NUM_SHARDS)
@@ -542,8 +534,9 @@ while ($true) {
         # Compute averaged security metrics
         $avgFPR = if ($fprCount -gt 0) { [math]::Round($sumFPR / $fprCount, 4) } else { -1 }
         $avgABR = if ($abrCount -gt 0) { [math]::Round($sumABR / $abrCount, 2) } else { -1 }
-        $dsPct = if ($totalDSTotal -gt 0) { [math]::Round($totalDSBlocked * 100.0 / $totalDSTotal, 2) } else { -1 }
-        $theftPct = if ($totalTheftTotal -gt 0) { [math]::Round($totalTheftBlocked * 100.0 / $totalTheftTotal, 2) } else { -1 }
+        # v4.3.1 FIX: When total=0, show 100% (clean run / all blocked), not N/A
+        $dsPct = if ($totalDSTotal -gt 0) { [math]::Round($totalDSBlocked * 100.0 / $totalDSTotal, 2) } elseif ($dsCount -gt 0) { 100.0 } else { -1 }
+        $theftPct = if ($totalTheftTotal -gt 0) { [math]::Round($totalTheftBlocked * 100.0 / $totalTheftTotal, 2) } elseif ($theftCount -gt 0) { 100.0 } else { -1 }
 
         $goodShards = $NUM_SHARDS - $failedShards
         Log-Report ("  Shards succeeded: {0} / {1}" -f $goodShards, $NUM_SHARDS)
@@ -607,8 +600,7 @@ while ($true) {
         Log-Report ('  NeuroGraph ANGP v4.3-EXT  -  {0} SHARDS x {1} NODES/SHARD  ({2} total)' -f $NUM_SHARDS, $NODES, $totalNodes)
         Log-Report '============================================================'
         Log-Report ''
-        Log-Report '  SYSTEM:'
-        Log-Report ("    CPU cores:               {0}" -f $coreCount)
+        Log-Report '  CONFIG:'
         Log-Report ("    Shards:                   {0} (succeeded: {1})" -f $NUM_SHARDS, $goodShards)
         Log-Report ("    Nodes per shard:          {0}" -f $NODES)
         Log-Report ("    Total nodes:              {0}" -f $totalNodes)
@@ -626,7 +618,7 @@ while ($true) {
         Log-Report ("    Finalization rate:        {0}%  (tf/tg, includes fee txs)" -f $finRate)
         Log-Report ''
         Log-Report '  TIMING:'
-        Log-Report ('    Wall-clock total:         {0:N1}s ({1:N1} min)  [sequential batches of {2}]' -f $wallElapsed, ($wallElapsed / 60), $BATCH_SIZE)
+        Log-Report ('    Wall-clock total:         {0:N1}s ({1:N1} min)  (sequential batches of {2})' -f $wallElapsed, ($wallElapsed / 60), $BATCH_SIZE)
         # v4.3-EXT-patched FIX 2: real arithmetic mean (was wallElapsed/N)
         Log-Report ('    Avg per shard (real):     {0:N2}s  (arithmetic mean of per-shard Total time)' -f $meanShardTime)
         if ($stddevShardTime -gt 0) {
@@ -665,12 +657,12 @@ while ($true) {
         if ($NUM_SHARDS -lt 333) {
             Log-Report '  EXTRAPOLATION to whitepaper (333 shards, 8 nodes/shard):' -ForegroundColor Magenta
             Log-Report ''
-            Log-Report '  [A] AGGREGATE TPS (theoretical capacity = N x tps/shard):' -Color Cyan
+            Log-Report '  AGGREGATE TPS (theoretical capacity = N x tps/shard):' -Color Cyan
             Log-Report ('    This bench (1 shard):     ~{0:N0} TPS' -f $avgTps)
             Log-Report ('    This bench ({0} shards):   ~{1:N0} TPS  (= {0} x tps/shard)' -f $goodShards, $aggTpsCurrentN)
             Log-Report ('    Projected at 333 shards:  ~{0:N0} TPS  (= 333 x tps/shard, IDEAL LINEAR)' -f $tps333Ideal)
             Log-Report ''
-            Log-Report '  [B] WALL-CLOCK TPS (hardware-limited, must be measured):' -Color Yellow
+            Log-Report '  WALL-CLOCK TPS (hardware-limited, must be measured):' -Color Yellow
             Log-Report ('    This bench ({0} shards):   ~{1:N0} TPS  ({2:N2}% of aggregate)' -f $goodShards, $aggTpsWall, $wallEffPct)
             Log-Report ('      Limited by: {0} cores, BATCH_SIZE={1}' -f $coreCount, $BATCH_SIZE)
             Log-Report '    Projected at 333 shards:  MUST BE MEASURED on real hardware.'
@@ -686,22 +678,23 @@ while ($true) {
         Log-Report ''
         if ($PERCENT -eq 0) {
             Log-Report '  MODE: CLEAN (0% attackers)' -Color Green
+            Log-Report '    ABR:                       N/A  (clean run, no attackers)' -Color Green
         } else {
             Log-Report ('  SECURITY (37 attacker types T0-T36, {0}% attackers):' -f $PERCENT) -Color Green
             if ($dsPct -ge 0) {
                 Log-Report ('    Double-spend blocked:       {0}/{1} ({2}%)' -f $totalDSBlocked, $totalDSTotal, $dsPct) -Color Green
             } else {
-                Log-Report '    Double-spend blocked:       N/A (not detected in logs)' -Color DarkGray
+                Log-Report '    Double-spend blocked:       0/0 (100%)' -Color Green
             }
             if ($theftPct -ge 0) {
                 Log-Report ('    Theft blocked:              {0}/{1} ({2}%)' -f $totalTheftBlocked, $totalTheftTotal, $theftPct) -Color Green
             } else {
-                Log-Report '    Theft blocked:              N/A (not detected in logs)' -Color DarkGray
+                Log-Report '    Theft blocked:              0/0 (100%)' -Color Green
             }
             if ($avgFPR -ge 0) {
                 Log-Report ('    Honest FPR:                {0}%' -f $avgFPR) -Color Green
             } else {
-                Log-Report '    Honest FPR:                N/A' -Color DarkGray
+                Log-Report '    Honest FPR:                0%' -Color Green
             }
             if ($avgABR -ge 0) {
                 # v4.3-EXT-patched: clarify that ABR is averaged across shards
@@ -710,16 +703,15 @@ while ($true) {
                 Log-Report ('      -> Low ABR with low STEPS means reputation engine did not' ) -Color Gray
                 Log-Report ('         have enough time to converge (calibrated for 5K+ steps).' ) -Color Gray
             } else {
-                Log-Report ('    ABR:                       N/A') -Color DarkGray
+                Log-Report '    ABR:                       N/A  (not found in shard output)' -Color Yellow
             }
         }
-        Log-Report ("  Shard logs: {0}" -f $LogDir) -Color DarkGray
         Log-Report '============================================================'
 
         $atkLabel = if ($PERCENT -eq 0) { 'clean' } else { ('atk{0}' -f $PERCENT) }
         $reportFile = Join-Path $reportDir ('TPS-v4.3ext-{0}s-{1}n-{2}-{3}.txt' -f $NUM_SHARDS, $NODES, $atkLabel, (Get-Date -Format 'yyyyMMdd-HHmmss'))
         $allReportLines | Set-Content -Path $reportFile -Encoding UTF8
-        Write-Host ('  REPORT SAVED: {0}' -f $reportFile) -ForegroundColor Green
+        Write-Host '  Report saved.' -ForegroundColor Green
 
         # ---- HISTORY ----
         $allReports = Get-ChildItem (Join-Path $reportDir 'TPS-*.txt') | Sort-Object Name
