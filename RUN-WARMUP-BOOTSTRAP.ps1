@@ -1,5 +1,5 @@
 ﻿# ===================================================================
-#  NeuroGraph ANGP v4.3-EXT - WARMUP + BENCHMARK WRAPPER (PowerShell)
+#  NeuroGraph ANGP v4.3-EXT - WARMUP BOOTSTRAP (PowerShell)
 #  ===================================================================
 #  SEPARAT de sim_stress_v43ext.rs - nu modifica fisierul original!
 #  Foloseste flag-ul --warmup deja existent in binar.
@@ -7,49 +7,25 @@
 #  UTILIZARE:
 #    .\RUN-WARMUP-BOOTSTRAP.ps1
 #    .\RUN-WARMUP-BOOTSTRAP.ps1 -Warmup 2000
-#    .\RUN-WARMUP-BOOTSTRAP.ps1 -Percent 30 -Nodes 2664 -Steps 10000 -Warmup 1000
-#    .\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
-#    .\RUN-WARMUP-BOOTSTRAP.ps1 -Full
-#    .\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
+#    .\RUN-WARMUP-BOOTSTRAP.ps1 -Percent 30 -Nodes 2664 -Warmup 1000
 # ===================================================================
 
 param(
-    [int]$Percent = 10,
+    [int]$Percent = 0,
     [int]$Nodes   = 2664,
-    [int]$Steps   = 5000,
     [int]$Warmup  = 1000,
-    [switch]$Quick,
-    [switch]$Full,
-    [switch]$Stress,
     [switch]$NoWarmup
 )
-
-# --- PROFILE PRESETS ---
- $ProfileName = "default"
-if ($Quick) {
-    $Nodes = 200; $Steps = 2000; $Warmup = 500; $ProfileName = "quick"
-}
-if ($Full) {
-    $Nodes = 2664; $Steps = 10000; $Warmup = 2000; $ProfileName = "full"
-}
-if ($Stress) {
-    $Nodes = 6660; $Steps = 20000; $Warmup = 3000; $Percent = 30; $ProfileName = "stress"
-}
-if ($NoWarmup) {
-    $Warmup = 0
-}
 
 # --- FIND BINARY ---
  $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
  $Binary = Join-Path $ScriptDir "bin\sim_stress_v43ext.exe"
 
 if (-not (Test-Path $Binary)) {
-    # Try target path (if compiled locally)
     $BinaryAlt = Join-Path $ScriptDir "target\release\examples\sim_stress_v43ext.exe"
     if (Test-Path $BinaryAlt) {
         $Binary = $BinaryAlt
     } else {
-        # Try Linux path (WSL / cross-platform)
         $BinaryAlt2 = Join-Path $ScriptDir "bin\sim_stress_v43ext"
         if (Test-Path $BinaryAlt2) {
             $Binary = $BinaryAlt2
@@ -62,9 +38,6 @@ if (-not (Test-Path $Binary)) {
             Write-Host "  Ruleaza setup.ps1 intai:" -ForegroundColor Yellow
             Write-Host "  .\setup.ps1" -ForegroundColor Green
             Write-Host ""
-            Write-Host "  Sau compileaza cu:" -ForegroundColor Yellow
-            Write-Host "  cargo build --release --example sim_stress_v43ext" -ForegroundColor Green
-            Write-Host ""
             exit 1
         }
     }
@@ -73,19 +46,15 @@ if (-not (Test-Path $Binary)) {
 # --- CALCULATIONS ---
  $NAttackers = [math]::Floor($Nodes * $Percent / 100)
  $NHonest    = $Nodes - $NAttackers
- $TotalSteps = $Warmup + $Steps
 
 # --- HEADER ---
 Write-Host ""
 Write-Host "+================================================================+" -ForegroundColor Cyan
-Write-Host "|  NeuroGraph ANGP v4.3-EXT - WARMUP BENCHMARK WRAPPER        |" -ForegroundColor Cyan
+Write-Host "|  NeuroGraph ANGP v4.3-EXT - WARMUP BOOTSTRAP                |" -ForegroundColor Cyan
 Write-Host "+================================================================+" -ForegroundColor Cyan
-Write-Host "|  Profile:    $ProfileName                                              |" -ForegroundColor Cyan
 Write-Host "|  Nodes:      $Nodes ($NHonest honest + $NAttackers attackers)       |" -ForegroundColor Cyan
 Write-Host "|  Attackers:  $Percent%                                            |" -ForegroundColor Cyan
 Write-Host "|  Warmup:     $Warmup steps                                     |" -ForegroundColor Cyan
-Write-Host "|  Benchmark:  $Steps steps                                    |" -ForegroundColor Cyan
-Write-Host "|  Total:      $TotalSteps steps                                   |" -ForegroundColor Cyan
 Write-Host "+================================================================+" -ForegroundColor Cyan
 Write-Host ""
 
@@ -93,12 +62,11 @@ if ($Warmup -gt 0) {
     Write-Host "+---------------------------------------------+" -ForegroundColor Magenta
     Write-Host "|  WARMUP MODE: $Warmup steps                     |" -ForegroundColor Magenta
     Write-Host "|  Toate nodurile honest in warmup,            |" -ForegroundColor Magenta
-    Write-Host "|  apoi atacatorii introdusi la step $Warmup.  |" -ForegroundColor Magenta
     Write-Host "|  Starea (rep, EMA, DAG) ramane CALDA        |" -ForegroundColor Magenta
     Write-Host "|  - niciun restart de proces!                |" -ForegroundColor Magenta
     Write-Host "+---------------------------------------------+" -ForegroundColor Magenta
 } else {
-    Write-Host "!  WARMUP DEZACTIVAT (0 steps) - benchmark de la rece" -ForegroundColor Yellow
+    Write-Host "!  WARMUP DEZACTIVAT (0 steps) - pornire de la rece" -ForegroundColor Yellow
 }
 Write-Host ""
 
@@ -113,18 +81,16 @@ if (Test-Path $Binary) {
 }
 Write-Host ""
 
-# --- RUN BENCHMARK ---
+# --- RUN WARMUP ---
 Write-Host "================================================================" -ForegroundColor Green
-Write-Host "  STARTING BENCHMARK..." -ForegroundColor Green
+Write-Host "  STARTING WARMUP..." -ForegroundColor Green
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host ""
 
  $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
-# Run the actual binary with --warmup flag
-# The binary handles warmup internally: warmup steps run all-honest,
-# then attackers are introduced. State stays warm (no process restart).
-& $Binary --percent $Percent --nodes $Nodes --steps $Steps --warmup $Warmup
+# Run the binary with --warmup flag only (NO benchmark)
+& $Binary --percent $Percent --nodes $Nodes --steps 0 --warmup $Warmup
 
  $ExitCode = $LASTEXITCODE
  $sw.Stop()
@@ -135,22 +101,19 @@ Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
 
 if ($ExitCode -eq 0) {
-    Write-Host "  OK BENCHMARK COMPLET" -ForegroundColor Green
+    Write-Host "  OK WARMUP COMPLET" -ForegroundColor Green
 } else {
-    Write-Host "  FAIL BENCHMARK ESUAT (exit code: $ExitCode)" -ForegroundColor Red
+    Write-Host "  FAIL WARMUP ESUAT (exit code: $ExitCode)" -ForegroundColor Red
 }
 
 Write-Host "================================================================" -ForegroundColor Cyan
 Write-Host "  Wall time:    ${WallSec}s"
-Write-Host "  Profile:      $ProfileName"
 Write-Host "  Nodes:        $Nodes"
 Write-Host "  Warmup:       $Warmup steps"
-Write-Host "  Benchmark:    $Steps steps"
-Write-Host "  Total steps:  $TotalSteps"
-if ($Warmup -gt 0) {
-    $Ratio = [math]::Round($Warmup * 100 / $TotalSteps, 1)
-    Write-Host "  Warmup ratio: ${Ratio}%"
-}
+Write-Host ""
+Write-Host "  Next steps (alege manual):" -ForegroundColor Yellow
+Write-Host "    .\RUN-TESTS-A.ps1       - Single-shard security analysis" -ForegroundColor White
+Write-Host "    .\RUN-NG-BENCHMARK.ps1  - Multi-shard benchmark" -ForegroundColor White
 Write-Host ""
 
 # Nu inchidem PowerShell - fereastra ramane deschisa
