@@ -83,19 +83,31 @@ Choose one script and click Copy to run it:
 
 ## How to Run
 
-1. **Setup** (first time only):
+Follow these steps in order:
+
+**1. Setup** (first time only):
 
 ```powershell
+git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
+cd neurograph-simulations
 .\setup.ps1
 ```
 
-2. **Warmup** the engine:
+**2. Warmup** the engine (choose one):
+
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
+```
 
 ```powershell
 .\RUN-WARMUP-BOOTSTRAP.ps1 -Full
 ```
 
-3. **Run simulation** (choose one):
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
+```
+
+**3. Run simulation** (choose one):
 
 ```powershell
 .\RUN-TESTS-A.ps1
@@ -105,7 +117,7 @@ Choose one script and click Copy to run it:
 .\RUN-NG-BENCHMARK.ps1
 ```
 
-4. **Compare** your results with the ANGP paper
+**4. Compare** your results with the ANGP paper
 
 ---
 
