@@ -20,19 +20,17 @@
 
 Clone the repo and run setup:
 
-    git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
-    cd neurograph-simulations
-    .\setup.ps1
+```powershell
+git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
+cd neurograph-simulations
+.\setup.ps1
+```
 
 ---
 
 ## Warmup Bootstrap
 
 Run `.\RUN-WARMUP-BOOTSTRAP.ps1` **before** simulations to initialize the engine and stabilize baseline metrics.
-
-Default usage:
-
-    .\RUN-WARMUP-BOOTSTRAP.ps1
 
 Available presets:
 
@@ -43,17 +41,33 @@ Available presets:
 | `-Stress` | 2 664 | 20 000 | 2 000 | Heavy stress for adversarial scenarios |
 | `-NoWarmup` | — | — | 0 | Skip warmup (cold start baseline) |
 
-Run one of the commands below to start the warmup:
+Choose one preset and click Copy to run it:
 
-    .\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
+```
 
-    .\RUN-WARMUP-BOOTSTRAP.ps1 -Full
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1 -Full
+```
 
-    .\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
+```
 
 ---
 
 ## Test Scripts
+
+Choose one script and click Copy to run it:
+
+```powershell
+.\RUN-TESTS-A.ps1
+```
+
+```powershell
+.\RUN-NG-BENCHMARK.ps1
+```
 
 | | .\RUN-TESTS-A.ps1 | .\RUN-NG-BENCHMARK.ps1 |
 |:---|:---|:---|
