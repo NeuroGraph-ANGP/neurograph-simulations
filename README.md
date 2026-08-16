@@ -79,6 +79,36 @@ Choose one script and click Copy to run it:
 | **Options** | Security / Clean / Resistance / Quick / Batch | Clean / Attack / Scaled / Custom / Info |
 | **Purpose** | Test adversarial pressure at different intensities within one shard | Benchmark TPS, latency and security across distributed multi-shard network |
 
+---
+
+## How to Run
+
+1. **Setup** (first time only):
+
+```powershell
+.\setup.ps1
+```
+
+2. **Warmup** the engine:
+
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1 -Full
+```
+
+3. **Run simulation** (choose one):
+
+```powershell
+.\RUN-TESTS-A.ps1
+```
+
+```powershell
+.\RUN-NG-BENCHMARK.ps1
+```
+
+4. **Compare** your results with the ANGP paper
+
+---
+
 ## Reproducing Paper Results
 
 1. Run `.\RUN-WARMUP-BOOTSTRAP.ps1` to warm up the engine and stabilize baseline metrics
