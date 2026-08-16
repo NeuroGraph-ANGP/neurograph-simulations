@@ -41,23 +41,32 @@ if ($NoWarmup) {
 
 # --- FIND BINARY ---
  $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
- $Binary = Join-Path $ScriptDir "target\release\examples\sim_stress_v43ext.exe"
+ $Binary = Join-Path $ScriptDir "bin\sim_stress_v43ext.exe"
 
 if (-not (Test-Path $Binary)) {
-    # Try Linux path too (WSL / cross-platform)
-    $BinaryAlt = Join-Path $ScriptDir "target\release\examples\sim_stress_v43ext"
+    # Try target path (if compiled locally)
+    $BinaryAlt = Join-Path $ScriptDir "target\release\examples\sim_stress_v43ext.exe"
     if (Test-Path $BinaryAlt) {
         $Binary = $BinaryAlt
     } else {
-        Write-Host ""
-        Write-Host "+======================================================+" -ForegroundColor Red
-        Write-Host "|  EROARE: Binarul nu exista!                          |" -ForegroundColor Red
-        Write-Host "+======================================================+" -ForegroundColor Red
-        Write-Host ""
-        Write-Host "  Compileaza mai intai cu:" -ForegroundColor Yellow
-        Write-Host "  cargo build --release --example sim_stress_v43ext" -ForegroundColor Green
-        Write-Host ""
-        exit 1
+        # Try Linux path (WSL / cross-platform)
+        $BinaryAlt2 = Join-Path $ScriptDir "bin\sim_stress_v43ext"
+        if (Test-Path $BinaryAlt2) {
+            $Binary = $BinaryAlt2
+        } else {
+            Write-Host ""
+            Write-Host "+======================================================+" -ForegroundColor Red
+            Write-Host "|  EROARE: Binarul nu exista!                          |" -ForegroundColor Red
+            Write-Host "+======================================================+" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "  Ruleaza setup.ps1 intai:" -ForegroundColor Yellow
+            Write-Host "  .\setup.ps1" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "  Sau compileaza cu:" -ForegroundColor Yellow
+            Write-Host "  cargo build --release --example sim_stress_v43ext" -ForegroundColor Green
+            Write-Host ""
+            exit 1
+        }
     }
 }
 
