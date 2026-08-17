@@ -49,7 +49,7 @@ function RunStressTest($testName, $percent, $nodes, $steps) {
     LogInfo ("Params: --percent {0} --nodes {1} --steps {2}" -f $percent, $nodes, $steps)
     Write-Host "[INFO] Binary: $BinPath" -ForegroundColor DarkGray
     Write-Host ""
-    &startTime = Get-Date
+    $startTime = Get-Date
     & $BinPath --percent $percent --nodes $nodes --steps $steps 2>&1 | Tee-Object -FilePath $outputFile
     $endTime = Get-Date
     $elapsed = ($endTime - $startTime).TotalSeconds
