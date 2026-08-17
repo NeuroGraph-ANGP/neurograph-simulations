@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-9b7eff?style=for-the-badge)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-4a9eff?style=for-the-badge)]()
 [![Shell: PowerShell](https://img.shields.io/badge/Shell-PowerShell-5391F2?style=for-the-badge)]()
-[![Release: v4.3.5](https://img.shields.io/badge/Release-v4.3.5-00d4aa?style=for-the-badge)](https://github.com/NeuroGraph-ANGP/neurograph-simulations/releases/latest)
+[![Release: v4.3.1](https://img.shields.io/badge/Release-v4.3.1-00d4aa?style=for-the-badge)](https://github.com/NeuroGraph-ANGP/neurograph-simulations/releases/latest)
 
 ---
 </div>
@@ -31,29 +31,6 @@ cd neurograph-simulations
 ## Warmup Bootstrap
 
 Run `.\RUN-WARMUP-BOOTSTRAP.ps1` **before** simulations to initialize the engine and stabilize baseline metrics.
-
-Available presets:
-
-| Preset | Nodes | Steps | Warmup | Use case |
-|:---|:---|:---|:---|:---|
-| `-Quick` | 200 | 2 000 | 500 | Fast smoke test before simulations |
-| `-Full` | 2 664 | 10 000 | 1 000 | Default warmup for paper reproduction |
-| `-Stress` | 2 664 | 20 000 | 2 000 | Heavy stress for adversarial scenarios |
-| `-NoWarmup` | — | — | 0 | Skip warmup (cold start baseline) |
-
-Choose one preset and click Copy to run it:
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
-```
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 -Full
-```
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
-```
 
 ---
 
@@ -97,14 +74,6 @@ cd neurograph-simulations
 
 ```powershell
 .\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
-```
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 -Full
-```
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 -Stress
 ```
 
 **3. Run simulation** (choose one):
