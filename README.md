@@ -80,10 +80,10 @@ cd neurograph-simulations
 
 ## Reproducing Paper Results
 
-1. Run `.\RUN-WARMUP-BOOTSTRAP.ps1` to warm up the engine and stabilize baseline metrics
-2. Run `.\RUN-NG-BENCHMARK.ps1` for the full multi-shard benchmark
-3. Run `.\RUN-TESTS-A.ps1` for single-shard security analysis
-4. Compare your results with the paper's reported values
+1. Run `.\RUN-NG-BENCHMARK.ps1` for the full multi-shard benchmark
+2. Run `.\RUN-TESTS-A.ps1` for single-shard security analysis
+3. Compare your results with the paper's reported values
+4. See the Whitepaper and technical papers at: https://neurograph-angp.surge.sh/# 
 
 ---
 
