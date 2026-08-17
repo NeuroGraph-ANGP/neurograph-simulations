@@ -28,9 +28,11 @@ cd neurograph-simulations
 
 ---
 
-## Warmup Bootstrap
+## Warmup Bootstrap (optional)
 
-Run `.\RUN-WARMUP-BOOTSTRAP.ps1` **before** simulations to initialize the engine and stabilize baseline metrics.
+```powershell
+.\RUN-WARMUP-BOOTSTRAP.ps1
+```
 
 ---
 
