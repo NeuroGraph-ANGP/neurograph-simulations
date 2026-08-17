@@ -72,10 +72,10 @@ cd neurograph-simulations
 .\setup.ps1
 ```
 
-**2. Warmup** the engine (choose one):
+**2. Warmup** (optional):
 
 ```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 -Quick
+.\RUN-WARMUP-BOOTSTRAP.ps1 
 ```
 
 **3. Run simulation** (choose one):
