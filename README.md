@@ -27,7 +27,6 @@ cd neurograph-simulations
 ```
 
 ---
----
 
 ## Test Scripts
 
