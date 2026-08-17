@@ -27,13 +27,6 @@ cd neurograph-simulations
 ```
 
 ---
-
-## Warmup Bootstrap (optional)
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1
-```
-
 ---
 
 ## Test Scripts
