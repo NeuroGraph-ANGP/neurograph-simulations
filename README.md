@@ -64,13 +64,7 @@ cd neurograph-simulations
 .\setup.ps1
 ```
 
-**2. Warmup** (optional):
-
-```powershell
-.\RUN-WARMUP-BOOTSTRAP.ps1 
-```
-
-**3. Run simulation** (choose one):
+**2. Run simulation** (choose one):
 
 ```powershell
 .\RUN-TESTS-A.ps1
@@ -80,7 +74,7 @@ cd neurograph-simulations
 .\RUN-NG-BENCHMARK.ps1
 ```
 
-**4. Compare** your results with the ANGP paper
+**3. Compare** your results with the ANGP paper
 
 ---
 
