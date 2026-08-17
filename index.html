@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANGP - NeuroGraph | Beyond Blockchain. Beyond Consensus.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0a;
+            --bg2: #111;
+            --white: #fff;
+            --gray: #888;
+            --green: #00d4aa;
+            --blue: #4a9eff;
+            --purple: #9b7eff;
+            --pink: #ff6b9d;
+            --yellow: #ffc94d;
+            --red: #ff6b6b;
+            --border: rgba(255,255,255,0.08);
+        }
+        
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--white); line-height: 1.5; overflow-x: hidden; }
+        
+        /* Animated DAG/Blockchain Background */
+        #dag-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        header { position: fixed; top: 0; left: 0; right: 0; background: rgba(10,10,10,0.97); border-bottom: 1px solid var(--border); padding: 10px 35px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; letter-spacing: 2px; font-size: 18px; }
+        .logo img { width: 28px; height: 28px; border-radius: 50%; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        nav { display: flex; gap: 55px; position: absolute; left: 50%; transform: translateX(-50%); }
+        nav a { color: var(--white); text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; }
+        nav a:hover { color: var(--green); }
+        .actions { display: flex; gap: 16px; }
+        .actions a { color: var(--white); text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: 6px; transition: 0.3s; }
+        .btn-wallet { background: linear-gradient(135deg, #9b7eff, #7c5cfc); }
+        .btn-node { border: 1px solid var(--border); }
+        .actions a:hover { transform: translateY(-1px); }
+        
+        /* Hero */
+        #hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 20px 80px; position: relative; overflow: hidden; background: radial-gradient(ellipse at center, rgba(155,126,255,0.08) 0%, transparent 70%); }
+        .hero h1 { font-size: 72px; font-weight: 900; letter-spacing: 8px; margin-bottom: 10px; background: linear-gradient(135deg, #fff 0%, #9b7eff 50%, #00d4aa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero h2 { font-size: 20px; font-weight: 400; letter-spacing: 6px; color: var(--gray); margin-bottom: 30px; }
+        .hero p { max-width: 600px; margin: 0 auto 40px; color: #aaa; line-height: 1.8; font-size: 15px; }
+        .btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; transition: all 0.3s; min-width: 170px; justify-content: center; }
+        .btn-primary { background: linear-gradient(135deg, #9b7eff, #7c5cfc); color: white; box-shadow: 0 4px 20px rgba(155,126,255,0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(155,126,255,0.5); }
+        .btn-secondary { border: 1px solid var(--border); color: var(--white); }
+        .btn-secondary:hover { border-color: var(--purple); background: rgba(155,126,255,0.1); }
+        
+        /* About */
+        #about { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+        .about-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; align-items: center; }
+        .about-text h3 { font-size: 28px; font-weight: 700; margin-bottom: 24px; letter-spacing: 1px; color:#ffffff; }
+        .about-text p { color: #999; margin-bottom: 16px; line-height: 1.8; font-size: 15px; }
+        .hl { color: var(--purple); font-weight: 700; }
+        .neural-icon { display: flex; justify-content: center; }
+        .neural-icon svg { width: 220px; height: 220px; }
+        
+        /* Architecture */
+        #architecture { padding: 80px 40px; background: var(--bg2); }
+        .arch-title { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px; color:#ffffff; }
+        .layers { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+        .layer { display: flex; gap: 20px; align-items: flex-start; padding: 22px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 10px; transition: all 0.3s; }
+        .layer:hover { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); transform: translateX(5px); }
+        .lnum { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; flex-shrink: 0; }
+        .lcont h4 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .lcont p { font-size: 13px; color: #888; line-height: 1.7; margin-bottom: 12px; }
+        .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); }
+        .l1 .lnum { background: rgba(74,158,255,0.15); color: #4a9eff; } .l1:hover { border-color: rgba(74,158,255,0.3); }
+        .l2 .lnum { background: rgba(155,126,255,0.15); color: #9b7eff; } .l2:hover { border-color: rgba(155,126,255,0.3); }
+        .l3 .lnum { background: rgba(255,107,157,0.15); color: #ff6b9d; } .l3:hover { border-color: rgba(255,107,157,0.3); }
+        .l4 .lnum { background: rgba(255,201,77,0.15); color: #ffc94d; } .l4:hover { border-color: rgba(255,201,77,0.3); }
+        .l5 .lnum { background: rgba(255,107,107,0.15); color: #ff6b6b; } .l5:hover { border-color: rgba(255,107,107,0.3); }
+        .l6 .lnum { background: rgba(0,212,170,0.15); color: #00d4aa; } .l6:hover { border-color: rgba(0,212,170,0.3); }
+        .l7 .lnum { background: rgba(0,229,199,0.15); color: #00e5c7; } .l7:hover { border-color: rgba(0,229,199,0.3); }
+        .l8 .lnum { background: rgba(183,148,246,0.15); color: #b794f6; } .l8:hover { border-color: rgba(183,148,246,0.3); }
+        .l9 .lnum { background: rgba(72,184,120,0.15); color: #48bb78; } .l9:hover { border-color: rgba(72,184,120,0.3); }
+        .divider { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 4px; color: #555; padding: 10px; }
+        
+        /* Data Flow Diagram */
+        #dataflow { padding: 60px 40px 50px; min-height: auto; background: var(--bg); }
+        .df-header { text-align: center; margin-bottom: 25px; }
+        .df-header h2 { font-size: 28px; font-weight: 700; margin-bottom: 6px; text-align:center; color:#ffffff;letter-spacing:1px; }
+        .df-header p { font-size: 12px; color: var(--gray); }
+        
+        .diagram-container {
+            position: relative;
+            width: 100%;
+            max-width: 1150px;
+            margin: 0 auto;
+            padding: 10px 50px 10px 40px;
+            overflow: visible;
+        }
+        
+        .diagram-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .layer-box {
+            fill: rgba(18, 18, 18, 0.95);
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 1;
+            rx: 8;
+            ry: 8;
+            transition: all 0.3s;
+        }
+        .layer-box:hover {
+            stroke-opacity: 0.3;
+            filter: brightness(1.1);
+        }
+        
+        .layer-num { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .layer-name { font-size: 14px; font-weight: 700; }
+        .layer-item { font-size: 10.5px; fill: #999; }
+        
+        .arrow-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        .arrow-violet { stroke: #9b7eff; stroke-width: 2; stroke-dasharray: 6,4; }
+        .arrow-yellow { stroke: #ffc94d; stroke-width: 2; }
+        .arrow-red { stroke: #ff6b6b; stroke-width: 2; }
+        .arrow-gray { stroke: #666; stroke-width: 2; stroke-dasharray: 4,4; }
+        .arrow-green { stroke: #00d4aa; stroke-width: 2; }
+        
+        .flow-animate {
+            stroke-dasharray: 8 5;
+            animation: flowDash 1.8s linear infinite;
+        }
+        @keyframes flowDash { to { stroke-dashoffset: -26; } }
+        
+        .arrow-label {
+            font-size: 9px;
+            font-weight: 600;
+            paint-order: stroke fill;
+            stroke: rgba(10,10,10,0.95);
+            stroke-width: 5px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        .side-label { font-size: 9px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase; }
+        
+        .df-desc {
+            background: rgba(12,12,12,0.98);
+            border: 1px solid rgba(255,201,77,0.12);
+            border-left: 3px solid var(--yellow);
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 25px auto 0;
+            max-width: 1150px;
+            width: 100%;
+        }
+        .df-desc h4 { color: var(--yellow); font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+        .df-desc ul { list-style: none; font-size: 11px; color: #999; line-height: 1.9; }
+        .df-desc li { padding-left: 16px; position: relative; margin-bottom: 4px; }
+        .df-desc li::before { content: '→'; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+        
+        footer { background: var(--bg2); padding: 25px; text-align: center; border-top: 1px solid var(--border); color: var(--gray); font-size: 12px; }
+        
+        @media(max-width:1024px){
+            .about-grid{grid-template-columns:1fr;gap:40px;}
+            .diagram-container{padding-right:25px;padding-left:15px;transform:scale(0.88);transform-origin:top center;}
+        }
+        @media(max-width:768px){
+            nav{display:none;}
+            .hero h1{font-size:40px;}
+            .hero h2{font-size:16px;letter-spacing:3px;}
+            .diagram-container{transform:scale(0.55);}
+            .layer{flex-direction:column;gap:8px;}
+        }
+        html{scroll-behavior:smooth;}
+        
+        /* ===== PAPERS SECTION STYLES ===== */
+        #papers{padding:100px 40px 80px;text-align:center;position:relative;z-index:2;}
+        .papers-container{max-width:1100px;margin:0 auto;}
+        #papers h2{font-size:28px;font-weight:700;color:#ffffff;margin-bottom:12px;letter-spacing:1px;}
+        .papers-subtitle{color:#9b7eff;font-size:14px;font-weight:600;letter-spacing:2px;margin-bottom:110px;text-transform:uppercase;}
+        .papers-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:24px;}
+        .paper-card{display:flex;flex-direction:column;align-items:center;background:rgba(15,20,35,0.85);border:1px solid rgba(74,158,255,0.25);border-radius:16px;padding:32px 24px;width:180px;text-decoration:none;transition:all 0.3s ease;position:relative;overflow:hidden;}
+        .paper-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4a9eff,#9b7eff);opacity:0;transition:opacity 0.3s ease;}
+        .paper-card:hover{transform:translateY(-8px);border-color:rgba(74,158,255,0.6);box-shadow:0 15px 40px rgba(74,158,255,0.2);}
+        .paper-card:hover::before{opacity:1;}
+        .paper-icon{font-size:36px;margin-bottom:14px;}
+        .paper-card h4{color:#e8ecf1;font-size:17px;font-weight:700;margin-bottom:6px;}
+        .paper-card p{color:#6b7a90;font-size:13px;margin-bottom:16px;}
+        .paper-link{color:#4a9eff;font-size:12px;font-weight:600;letter-spacing:0.5px;transition:color 0.3s ease;}
+        .paper-card:hover .paper-link{color:#7eb8ff;}
+        .paper-manifesto{border-color:rgba(155,126,255,0.35);}
+        .paper-manifesto:hover{border-color:rgba(155,126,255,0.6);box-shadow:0 15px 40px rgba(155,126,255,0.2);}
+        .paper-manifesto::before{background:linear-gradient(90deg,#9b7eff,#ff6b9d);}
+        .paper-manifesto .paper-link{color:#9b7eff;}
+        .paper-manifesto:hover .paper-link{color:#b89eff;}
+        .paper-whitepaper{border-color:rgba(0,212,170,0.35);}
+        .paper-whitepaper:hover{border-color:rgba(0,212,170,0.6);box-shadow:0 15px 40px rgba(0,212,170,0.2);}
+        .paper-whitepaper::before{background:linear-gradient(90deg,#00d4aa,#00b894);}
+        .paper-whitepaper .paper-link{color:#00d4aa;}
+        .paper-whitepaper:hover .paper-link{color:#00e5c7;}
+        @media(max-width:768px){
+            #papers{padding:60px 20px;}
+            .papers-grid{gap:16px;}
+            .paper-card{width:145px;padding:24px 16px;}
+            #papers h2{font-size:28px;}
+        }
+        
+        /* ===== 9-LAYER ARCHITECTURE SECTION STYLES ===== */
+        #architecture-layers{padding:80px 40px;position:relative;z-index:2;background:transparent;}
+        .arch-container{max-width:1100px;margin:0 auto;}
+        .arch-title{font-size:28px;font-weight:700;color:#ffffff;text-align:center;margin-bottom:8px;letter-spacing:1px;}
+        .arch-subtitle{color:#9b7eff;font-size:14px;font-weight:600;text-align:center;margin-bottom:45px;letter-spacing:2px;text-transform:uppercase;}
+        
+        .layers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1050px;margin:0 auto;}
+        
+        .layer-card{background:rgba(8,10,22,0.85);border-radius:10px;overflow:hidden;border:1px solid rgba(155,126,255,0.12);transition:all 0.3s ease;}
+        .layer-card:hover{border-color:rgba(155,126,255,0.35);transform:translateY(-4px);box-shadow:0 12px 35px rgba(0,0,0,0.4);}
+        
+        .layer-header{padding:12px 16px;font-size:14px;font-weight:700;letter-spacing:1px;color:#ffffff;border-bottom:1px solid rgba(255,255,255,0.08);}
+        
+        .layer-content{padding:16px;height:100px;display:flex;align-items:center;justify-content:center;}
+        .layer-svg-icon{width:70px;height:70px;}
+        
+        /* Layer-specific header colors */
+        .layer-l1 .layer-header{background:linear-gradient(135deg,#4a9eff 0%,#3a7ecc 100%);}
+        .layer-l2 .layer-header{background:linear-gradient(135deg,#9b7eff 0%,#7b5ed4 100%);}
+        .layer-l3 .layer-header{background:linear-gradient(135deg,#ff6b9d 0%,#e55588 100%);}
+        .layer-l4 .layer-header{background:linear-gradient(135deg,#ffc94d 0%,#e5ad3d 100%);color:#1a1a2e;}
+        .layer-l5 .layer-header{background:linear-gradient(135deg,#ff6b6b 0%,#e55555 100%);}
+        .layer-l6 .layer-header{background:linear-gradient(135deg,#00d4aa 0%,#00b894 100%);}
+        .layer-l7 .layer-header{background:linear-gradient(135deg,#00e5c7 0,#00c4ab 100%);}
+        .layer-l8 .layer-header{background:linear-gradient(135deg,#b794f6 0%,#9b7edd 100%);}
+        .layer-l9 .layer-header{background:linear-gradient(135deg,#48bb78 0%,#38a169 100%);}
+        
+        @media(max-width:900px){
+            .layers-grid{grid-template-columns:repeat(2,1fr);gap:12px;}
+            .arch-title{font-size:32px;}
+        }
+        @media(max-width:600px){
+            .layers-grid{grid-template-columns:1fr;}
+            #architecture-layers{padding:50px 20px;}
+        }
+        
+        /* ===== LAYER POPUP/MODAL STYLES ===== */
+        .layer-card{cursor:pointer;transition:all 0.3s ease;}
+        .layer-card:hover{border-color:rgba(155,126,255,0.5);transform:translateY(-6px);box-shadow:0 16px 45px rgba(155,126,255,0.25);}
+        
+        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:9999;backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.3s ease;}
+        .modal-overlay.active{display:flex;opacity:1;}
+        
+        .modal-container{background:linear-gradient(145deg,#0d1020 0%,#141830 100%);border-radius:20px;max-width:700px;width:100%;min-height:auto;max-height:85vh;overflow-y:auto;overflow-x:hidden;border:1px solid rgba(155,126,255,0.2);box-shadow:0 30px 80px rgba(0,0,0,0.6),0 0 60px rgba(155,126,255,0.1);transform:scale(0.9) translateY(30px);transition:transform 0.3s ease;}
+        .modal-overlay.active .modal-container{transform:scale(1) translateY(0);}
+        
+        .modal-header{padding:28px 32px 20px;border-bottom:1px solid rgba(255,255,255,0.08);position:relative;display:flex;align-items:center;gap:16px;}
+        .modal-close{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:#8892a0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;}
+        .modal-close:hover{background:rgba(255,107,157,0.2);color:#ff6b6b;}
+        
+        .modal-layer-num{font-size:14px;font-weight:800;letter-spacing:2px;padding:6px 12px;border-radius:8px;text-transform:uppercase;}
+        .modal-title{font-size:26px;font-weight:800;color:#ffffff;margin:0;letter-spacing:0.5px;}
+        
+        .modal-body{padding:24px 32px 32px;}
+        .modal-description{color:#b8c4d8;font-size:14px;line-height:1.8;margin-bottom:24px;}
+        .modal-description strong{color:#ffffff;}
+        
+        .modal-visual{background:rgba(10,12,25,0.6);border-radius:14px;padding:24px;border:1px solid rgba(155,126,255,0.1);margin-bottom:20px;}
+        .modal-visual svg{width:100%;height:auto;display:block;}
+        
+        .modal-features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px;}
+        .modal-feature{background:rgba(155,126,255,0.06);padding:12px 16px;border-radius:10px;border:1px solid rgba(155,126,255,0.08);}
+        .modal-feature-icon{font-size:18px;margin-right:8px;}
+        .modal-feature-text{font-size:13px;color:#c8d4e8;line-height:1.5;}
+
+        /* Layer-specific modal header colors */
+        .modal-l1 .modal-layer-num{background:linear-gradient(135deg,#4a9eff,#3a7ecc);color:#fff;}
+        .modal-l2 .modal-layer-num{background:linear-gradient(135deg,#9b7eff,#7b5ed4);color:#fff;}
+        .modal-l3 .modal-layer-num{background:linear-gradient(135deg,#ff6b9d,#e55588);color:#fff;}
+        .modal-l4 .modal-layer-num{background:linear-gradient(135deg,#ffc94d,#e5ad3d);color:#1a1a2e;}
+        .modal-l5 .modal-layer-num{background:linear-gradient(135deg,#ff6b6b,#e55555);color:#fff;}
+        .modal-l6 .modal-layer-num{background:linear-gradient(135deg,#00d4aa,#00b894);color:#fff;}
+        .modal-l7 .modal-layer-num{background:linear-gradient(135deg,#00e5c7,#00c4ab);color:#1a1a2e;}
+        .modal-l8 .modal-layer-num{background:linear-gradient(135deg,#b794f6,#9b7edd);color:#fff;}
+        .modal-l9 .modal-layer-num{background:linear-gradient(135deg,#48bb78,#38a169);color:#fff;}
+        
+        @media(max-width:600px){
+            .modal-container{max-width:100%;max-height:90vh;border-radius:16px;}
+            .modal-header{padding:20px 20px 16px;}
+            .modal-body{padding:20px 20px 24px;}
+            .modal-features{grid-template-columns:1fr;}
+        }
+        
+        /* ===== PERFORMANCE SECTION STYLES ===== */
+        #performance{padding:80px 40px;position:relative;z-index:2;}
+        .perf-container{max-width:1200px;margin:0 auto;}
+        
+        /* Header Row - Left title, Right measured TPS */
+        .perf-header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:50px;flex-wrap:wrap;gap:80px;}
+        .perf-header-left{flex:1;min-width:400px;margin-right:100px;}
+        #performance h2{font-size:28px;font-weight:700;color:#ffffff;margin-bottom:4px;letter-spacing:1px;}
+        .perf-subtitle{color:#9b7eff;font-size:14px;font-weight:600;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+        .perf-desc{color:#8892a0;font-size:13px;line-height:1.7;max-width:650px;}
+        
+        /* Measured TPS - FIXED WIDTH so animation doesn't move surrounding text */
+        .perf-header-right{text-align:left;display:flex;flex-direction:column;align-items:flex-start;margin-top:50px;}
+        .measured-label{color:#8892a0;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;}
+        .tps-value{font-size:52px;font-weight:900;color:#ffffff;letter-spacing:2px;line-height:1.05;display:inline-block;width:280px;text-align:left;overflow:visible;}
+        .tps-unit{color:#9b7eff;font-size:13px;font-weight:700;letter-spacing:2px;}
+        
+        /* Stats Row */
+        .stats-row{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:45px;padding:0 10px;}
+        .stat-item{display:flex;flex-direction:column;align-items:center;flex:1;max-width:200px;}
+        .stat-svg-icon{width:36px;height:36px;margin-bottom:12px;opacity:0.85;}
+        .stat-number{font-size:34px;font-weight:800;color:#ffffff;letter-spacing:0.5px;margin-bottom:6px;line-height:1.1;}
+        .stat-label{color:#6b7a90;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;text-align:center;}
+        
+        /* Charts Row */
+        .charts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:40px;}
+        .chart-box{background:rgba(12,15,28,0.7);border:1px solid rgba(155,126,255,0.12);border-radius:10px;padding:18px 18px 16px 18px;position:relative;}
+        .chart-label{color:#9b7eff;font-size:9px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px;}
+        
+        /* Chart Body - UNIFORM sizes and spacing */
+        .chart-body-simple{position:relative;padding:0;}
+        .chart-tl{font-size:32px;font-weight:800;color:#ffffff;line-height:1.05;margin-bottom:4px;}
+        .chart-tl-sub{color:#6b7a90;font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;line-height:1.4;}
+        
+        .chart-body-dual{position:relative;padding:0;display:flex;justify-content:space-between;align-items:flex-start;}
+        
+        /* Top-Left Corner - same size as chart-tl */
+        .chart-corner-tl{text-align:left;}
+        .chart-val-main{font-size:32px;font-weight:800;color:#ffffff;line-height:1.05;margin-bottom:4px;}
+        .chart-val-sub{color:#6b7a90;font-size:10px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;line-height:1.4;}
+        
+        /* Bottom-Right Corner */
+        .chart-corner-br{text-align:right;position:absolute;bottom:6px;right:14px;}
+        .chart-val-xs{color:#9b7eff;font-size:8px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;line-height:1.3;}
+        .chart-val-main-br{font-size:24px;font-weight:800;color:#ffffff;line-height:1.05;margin-bottom:3px;}
+        .chart-val-sub-br{color:#6b7a90;font-size:9px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;line-height:1.4;}
+        
+        /* Security Row */
+        .security-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+        .security-card{display:flex;align-items:center;gap:14px;background:rgba(12,15,28,0.5);border:1px solid rgba(155,126,255,0.08);border-radius:10px;padding:18px 20px;}
+        .security-icon{width:32px;height:32px;flex-shrink:0;opacity:0.85;}
+        .security-content{flex:1;min-width:0;}
+        .security-title{font-size:11px;font-weight:700;color:#ffffff;letter-spacing:0.5px;margin-bottom:4px;text-transform:uppercase;}
+        .security-desc{font-size:11px;color:#8892a0;line-height:1.5;}
+        .hl-purple{color:#9b7eff;font-weight:700;}
+        
+        @media(max-width:1024px){
+            .charts-row{grid-template-columns:1fr;}
+            .security-row{grid-template-columns:1fr;}
+            .stats-row{flex-wrap:wrap;justify-content:center;}
+            .stat-item{min-width:120px;max-width:none;}
+        }
+        @media(max-width:768px){
+            #performance{padding:60px 20px;}
+            #performance h2{font-size:32px;}
+            .perf-header-left{min-width:auto;}
+            .tps-value{font-size:38px;width:200px;}
+            .stat-number{font-size:26px;}
+            .chart-value-large,.chart-val-main{font-size:28px;}
+            .chart-value-md,.chart-val-main-br{font-size:22px;}
+        }
+    </style>
+</head>
+<body>
+<canvas id="dag-canvas"></canvas>
+
+<script>
+// Animated DAG/Blockchain Node Background - FAST & DYNAMIC
+(function() {
+    const canvas = document.getElementById('dag-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let width, height;
+    let nodes = [];
+    let particles = [];
+    const nodeCount = 80;
+    const connectionDistance = 180;
+    const colors = ['#4a9eff', '#6eb5ff', '#8ecfff', '#b3d9ff', '#ffffff'];
+    
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    
+    function createNodes() {
+        nodes = [];
+        for (let i = 0; i < nodeCount; i++) {
+            nodes.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.12,
+                vy: (Math.random() - 0.5) * 0.12,
+                radius: Math.random() * 3 + 1.5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                pulse: Math.random() * Math.PI * 2,
+                pulseSpeed: 0.05 + Math.random() * 0.05
+            });
+        }
+    }
+    
+    // Create data particles that flow along connections
+    function createParticle(fromNode, toNode) {
+        return {
+            fromX: fromNode.x,
+            fromY: fromNode.y,
+            toX: toNode.x,
+            toY: toNode.y,
+            progress: 0,
+            speed: 0.0004 + Math.random() * 0.0008,
+            color: fromNode.color,
+            size: 2 + Math.random() * 2
+        };
+    }
+    
+    function drawNode(node) {
+        // Clean sphere without halo
+        const size = node.radius;
+        
+        // Simple bright sphere - no glow
+        const gradient = ctx.createRadialGradient(
+            node.x - size * 0.3, node.y - size * 0.3, 0,
+            node.x, node.y, size
+        );
+        gradient.addColorStop(0, '#ffffff');
+        gradient.addColorStop(0.5, node.color);
+        gradient.addColorStop(1, 'rgba(74, 158, 255, 0.3)');
+        
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = 0.65;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+    
+    function drawConnections() {
+        let connectionCount = 0;
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const dx = nodes[i].x - nodes[j].x;
+                const dy = nodes[i].y - nodes[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < connectionDistance) {
+                    connectionCount++;
+                    const opacity = (1 - distance / connectionDistance) * 0.25;
+                    
+                    // Solid complete line - no dashes
+                    ctx.setLineDash([]);
+                    
+                    // Subtle gradient line
+                    const gradient = ctx.createLinearGradient(
+                        nodes[i].x, nodes[i].y,
+                        nodes[j].x, nodes[j].y
+                    );
+                    gradient.addColorStop(0, `rgba(74, 158, 255, ${opacity})`);
+                    gradient.addColorStop(1, `rgba(142, 207, 255, ${opacity * 0.7})`);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(nodes[i].x, nodes[i].y);
+                    ctx.lineTo(nodes[j].x, nodes[j].y);
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    
+                    // Spawn particles on some connections
+                    if (Math.random() < 0.008 && particles.length < 20) {
+                        particles.push(createParticle(nodes[i], nodes[j]));
+                    }
+                }
+            }
+        }
+    }
+    
+    function updateAndDrawParticles() {
+        particles = particles.filter(p => p.progress < 1);
+        
+        particles.forEach(p => {
+            p.progress += p.speed;
+            
+            const x = p.fromX + (p.toX - p.fromX) * p.progress;
+            const y = p.fromY + (p.toY - p.fromY) * p.progress;
+            
+            // Small clean particle - no glow
+            ctx.beginPath();
+            ctx.arc(x, y, p.size * 0.7, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.5;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        });
+    }
+    
+    function updateNodes() {
+        nodes.forEach(node => {
+            node.x += node.vx;
+            node.y += node.vy;
+            node.pulse += node.pulseSpeed;
+            
+            // Bounce off edges with slight randomization
+            if (node.x < 0 || node.x > width) {
+                node.vx *= -1;
+                node.vy += (Math.random() - 0.5) * 0.5;
+            }
+            if (node.y < 0 || node.y > height) {
+                node.vy *= -1;
+                node.vx += (Math.random() - 0.5) * 0.5;
+            }
+            
+            // Keep in bounds
+            node.x = Math.max(0, Math.min(width, node.x));
+            node.y = Math.max(0, Math.min(height, node.y));
+            
+            // Limit velocity
+            const maxVel = 0.15;
+            node.vx = Math.max(-maxVel, Math.min(maxVel, node.vx));
+            node.vy = Math.max(-maxVel, Math.min(maxVel, node.vy));
+        });
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw animated connections
+        drawConnections();
+        
+        // Update and draw flowing particles
+        updateAndDrawParticles();
+        
+        // Draw and update nodes
+        updateNodes();
+        nodes.forEach(drawNode);
+        
+        requestAnimationFrame(animate);
+    }
+    
+    window.addEventListener('resize', () => {
+        resize();
+        createNodes();
+    });
+    
+    resize();
+    createNodes();
+    animate();
+})();
+</script>
+
+<header>
+    <div class="logo">
+        <img src="angp_logo.png" alt="ANGP Logo" style="width: 28px; height: 28px; border-radius: 50%;">
+        ANGP
+    </div>
+    <nav><a href="#hero">Overview</a><a href="#architecture-layers">Architecture</a><a href="#performance">Performance</a><a href="#papers">Papers</a><a href="#roadmap">Roadmap</a></nav>
+</header>
+
+<section id="hero">
+    <div class="hero">
+        <h1>NeuroGraph</h1>
+        <h2>Beyond Blockchain. Beyond Consensus.</h2>
+        <p>Adaptive Neural Gossip Protocol for next-generation Web 3 infrastructure.<br>Neural Intelligence. Decentralized. Self-Defending. Build to evolve.</p>
+        <div class="btns">
+            <a href="https://github.com/NeuroGraph-ANGP/neurograph-simulations" target="_blank" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub →
+            </a>
+            <a href="#" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Read Whitepaper
+            </a>
+        </div>
+    </div>
+</section>
+
+<section id="about">
+    <div class="about-grid">
+        <div class="about-text">
+            <h3>WHAT IS NeuroGraph (ANGP)?</h3>
+            <p>NeuroGraph (ANGP — Adaptive Neural Gossip Protocol) is a new-generation decentralized Layer 1 network for DeFi and Web3 infrastructure — inspired by biological intelligence and designed to communicate, adapt, learn, and defend itself.</p>
+            <p>At its core, ANGP introduces a novel <span class="hl">DUAL-DAG</span> architecture that separates network intelligence from transaction execution. A Hebbian-inspired Prediction DAG continuously coordinates network behavior, while a Three-Lane deterministic DAG processes transactions at high speed.</p>
+            <p>There is no traditional consensus. No global voting round, no leader-driven coordination. Instead, consensus emerges from the collective intelligence of the network — continuously shaped by prediction, reputation, trust, and network behavior</p>
+            <p>This architectural approach enables ANGP to pursue <span class="hl">EXTREME</span> scalability, security, and decentralization — challenging the fundamental limitations of static blockchain architectures.</p>
+        </div>
+        <div class="neural-icon">
+            <img src="angp_logo.png" alt="ANGP Logo" style="width: 400px; height: 400px; border-radius: 50%;">
+        </div>
+    </div>
+</section>
+
+<!-- ===== 9-LAYER SYSTEM ARCHITECTURE ===== -->
+<section id="architecture-layers">
+    <div class="arch-container">
+        <h2 class="arch-title">ANGP System Architecture</h2>
+        <p class="arch-subtitle">Nine Layers. One Adaptive Protocol.</p>
+        
+        <!-- 3x3 Grid of Layers -->
+        <div class="layers-grid">
+            <!-- ROW 1 -->
+            <div class="layer-card layer-l1">
+                <div class="layer-header">L1 Transaction</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <rect x="12" y="20" width="56" height="40" rx="4" stroke="#4a9eff" stroke-width="1.8" fill="none"/>
+                        <line x1="22" y1="32" x2="58" y2="32" stroke="#4a9eff" stroke-width="1.5"/>
+                        <line x1="22" y1="42" x2="50" y2="42" stroke="#4a9eff" stroke-width="1.5"/>
+                        <path d="M48,50 L54,56 L64,44" stroke="#4a9eff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="layer-card layer-l2">
+                <div class="layer-header">L2 Prediction</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <circle cx="28" cy="32" r="14" stroke="#9b7eff" stroke-width="1.8" fill="none"/>
+                        <circle cx="52" cy="48" r="18" stroke="#9b7eff" stroke-width="1.8" fill="none"/>
+                        <line x1="38" y1="40" x2="42" y2="38" stroke="#9b7eff" stroke-width="1.5"/>
+                        <circle cx="28" cy="32" r="3" fill="#9b7eff" opacity="0.6"/>
+                        <text x="46" y="53" font-size="14" fill="#9b7eff" opacity="0.7">?</text>
+                    </svg>
+                </div>
+            </div>
+            <div class="layer-card layer-l3">
+                <div class="layer-header">L3 Consensus</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <path d="M20,55 L35,28 L50,55" stroke="#ff6b9d" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                        <path d="M52,55 L67,30 L78,55" stroke="#ff6b9d" stroke-width="1.8" fill="none" stroke-linejoin="round" opacity="0.6"/>
+                        <line x1="37" y1="38" x2="60" y2="36" stroke="#ff6b9d" stroke-width="1.2" stroke-dasharray="3,2"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- ROW 2 -->
+            <div class="layer-card layer-l4">
+                <div class="layer-header">L4 Reputation</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <polygon points="40,16 46,34 65,34 50,45 55,63 40,52 25,63 30,45 15,34 34,34" stroke="#ffc94d" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                        <circle cx="40" cy="40" r="10" stroke="#ffc94d" stroke-width="1.5" fill="none"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="layer-card layer-l5">
+                <div class="layer-header">L5 Security</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <path d="M40,14 L18,24 V40 C18,54 27,66 40,70 C53,66 62,54 62,40 V24 Z" stroke="#ff6b6b" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                        <path d="M30,42 L36,48 L50,34" stroke="#ff6b6b" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="layer-card layer-l6">
+                <div class="layer-header">L6 Network</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <circle cx="22" cy="26" r="7" stroke="#00d4aa" stroke-width="1.8" fill="none"/>
+                        <circle cx="58" cy="26" r="7" stroke="#00d4aa" stroke-width="1.8" fill="none"/>
+                        <circle cx="40" cy="56" r="7" stroke="#00d4aa" stroke-width="1.8" fill="none"/>
+                        <line x1="27" y1="31" x2="35" y2="51" stroke="#00d4aa" stroke-width="1.3"/>
+                        <line x1="53" y1="31" x2="45" y2="51" stroke="#00d4aa" stroke-width="1.3"/>
+                        <line x1="29" y1="26" x2="51" y2="26" stroke="#00d4aa" stroke-width="1.3"/>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- ROW 3 -->
+            <div class="layer-card layer-l7">
+                <div class="layer-header">L7 Sharding</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <ellipse cx="28" cy="42" rx="18" ry="22" stroke="#00e5c7" stroke-width="1.8" fill="none"/>
+                        <ellipse cx="52" cy="42" rx="18" ry="22" stroke="#00e5c7" stroke-width="1.8" fill="none"/>
+                        <circle cx="22" cy="38" r="3" fill="#00e5c7" opacity="0.7"/>
+                        <circle cx="34" cy="46" r="3" fill="#00e5c7" opacity="0.7"/>
+                        <circle cx="46" cy="38" r="3" fill="#00e5c7" opacity="0.7"/>
+                        <circle cx="58" cy="46" r="3" fill="#00e5c7" opacity="0.7"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="layer-card layer-l8">
+                <div class="layer-header">L8 Slot</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <rect x="16" y="22" width="48" height="10" rx="3" stroke="#b794f6" stroke-width="1.8" fill="none"/>
+                        <rect x="16" y="38" width="36" height="10" rx="3" stroke="#b794f6" stroke-width="1.8" fill="none"/>
+                        <rect x="16" y="54" width="24" height="10" rx="3" stroke="#b794f6" stroke-width="1.8" fill="none"/>
+                        <circle cx="68" cy="42" r="10" stroke="#b794f6" stroke-width="1.5" fill="none"/>
+                        <polyline points="64,42 67,45 72,39" stroke="#b794f6" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="layer-card layer-l9">
+                <div class="layer-header">L9 Finality</div>
+                <div class="layer-content">
+                    <svg viewBox="0 0 80 80" class="layer-svg-icon">
+                        <path d="M18,42 L26,50 L40,33" stroke="#48bb78" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M44,42 L52,50 L66,33" stroke="#48bb78" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75"/>
+                        <circle cx="20" cy="58" r="4" stroke="#48bb78" stroke-width="1.5" fill="none" opacity="0.5"/>
+                        <circle cx="40" cy="62" r="4" stroke="#48bb78" stroke-width="1.5" fill="none" opacity="0.5"/>
+                        <circle cx="60" cy="58" r="4" stroke="#48bb78" stroke-width="1.5" fill="none" opacity="0.5"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== LAYER MODALS / POPUPS ===== -->
+
+<!-- L1 Transaction Modal -->
+<div class="modal-overlay" id="modal-l1">
+    <div class="modal-container modal-l1">
+        <div class="modal-header">
+            <span class="modal-layer-num">L1</span>
+            <h3 class="modal-title">Transaction Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l1')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L1 Transaction Layer</strong> is the entry point of the ANGP protocol stack. It accepts incoming transactions from wallets and network participants, validates cryptographic signatures, checks for double-spend conflicts against the local ledger state, and inserts valid transactions into the mempool for processing.
+                <br><br>This layer manages the complete <strong>transaction lifecycle</strong> from initial submission through DAG inclusion and finalization. Transactions are prioritized by arrival time and processed through a Three-Lane deterministic DAG — enabling parallel validation across multiple shards while maintaining strict causal ordering guarantees.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- TX Input -->
+                    <rect x="20" y="60" width="80" height="50" rx="8" fill="#4a9eff" fill-opacity="0.2" stroke="#4a9eff" stroke-width="2"/>
+                    <text x="60" y="90" text-anchor="middle" fill="#4a9eff" font-size="12" font-weight="600">TX Input</text>
+                    <!-- Validation -->
+                    <rect x="140" y="40" width="100" height="90" rx="8" fill="#4a9eff" fill-opacity="0.15" stroke="#4a9eff" stroke-width="1.5"/>
+                    <text x="190" y="70" text-anchor="middle" fill="#4a9eff" font-size="11" font-weight="600">Validation</text>
+                    <text x="190" y="88" text-anchor="middle" fill="#8892a0" font-size="9">• Signature ✓</text>
+                    <text x="190" y="102" text-anchor="middle" fill="#8892a0" font-size="9">• Double-spend ✓</text>
+                    <text x="190" y="116" text-anchor="middle" fill="#8892a0" font-size="9">• Balance ✓</text>
+                    <!-- Mempool -->
+                    <rect x="290" y="60" width="80" height="50" rx="8" fill="#4a9eff" fill-opacity="0.25" stroke="#4a9eff" stroke-width="2"/>
+                    <text x="330" y="82" text-anchor="middle" fill="#4a9eff" font-size="11" font-weight="600">Mempool</text>
+                    <text x="330" y="98" text-anchor="middle" fill="#8892a0" font-size="9">Queue</text>
+                    <!-- Arrows -->
+                    <path d="M105 85 L135 85" stroke="#4a9eff" stroke-width="2" marker-end="url(#arrow-blue)"/>
+                    <path d="M245 85 L285 85" stroke="#4a9eff" stroke-width="2" marker-end="url(#arrow-blue)"/>
+                    <defs><marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#4a9eff"/></marker></defs>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">📥</span><span class="modal-feature-text"><strong>TX Reception:</strong> Accepts & parses incoming transactions</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔐</span><span class="modal-feature-text"><strong>Signature Validation:</strong> Ed25519 verification</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔄</span><span class="modal-feature-text"><strong>Double-Spend Check:</strong> Conflict detection</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">⚡</span><span class="modal-feature-text"><strong>Fee Calculation:</strong> 0.1% per transaction</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L2 Prediction Modal -->
+<div class="modal-overlay" id="modal-l2">
+    <div class="modal-container modal-l2">
+        <div class="modal-header">
+            <span class="modal-layer-num">L2</span>
+            <h3 class="modal-title">Prediction Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l2')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L2 Prediction Layer</strong> is embedded within each node's main loop and generates the four-dimensional prediction vector pᵢ(t) using a Hebbian learning rule. This layer operates on the node's local view of the DAG and updates its internal weights after each consensus step.
+                <br><br>Although logically distinct from consensus, the <strong>prediction subsystem operates on fundamentally different data structures and time scales</strong>. The separation was motivated by the need to make reasoning about invariants and failure modes more tractable.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Node circles -->
+                    <circle cx="80" cy="70" r="30" fill="#9b7eff" fill-opacity="0.2" stroke="#9b7eff" stroke-width="2"/>
+                    <text x="80" y="75" text-anchor="middle" fill="#9b7eff" font-size="11" font-weight="600">Node A</text>
+                    <circle cx="200" cy="50" r="30" fill="#9b7eff" fill-opacity="0.15" stroke="#9b7eff" stroke-width="1.5"/>
+                    <text x="200" y="55" text-anchor="middle" fill="#9b7eff" font-size="11" font-weight="600">Node B</text>
+                    <circle cx="200" cy="120" r="30" fill="#9b7eff" fill-opacity="0.15" stroke="#9b7eff" stroke-width="1.5"/>
+                    <text x="200" y="125" text-anchor="middle" fill="#9b7eff" font-size="11" font-weight="600">Node C</text>
+                    <circle cx="320" cy="90" r="35" fill="#9b7eff" fill-opacity="0.25" stroke="#9b7eff" stroke-width="2"/>
+                    <text x="320" y="86" text-anchor="middle" fill="#9b7eff" font-size="10" font-weight="600">Aggregated</text>
+                    <text x="320" y="100" text-anchor="middle" fill="#9b7eff" font-size="14" font-weight="800">p(t)</text>
+                    <!-- Arrows (predictions flowing) -->
+                    <path d="M115 65 Q155 45 165 52" stroke="#9b7eff" stroke-width="1.5" stroke-dasharray="4,2"/>
+                    <path d="M115 78 Q155 110 168 115" stroke="#9b7eff" stroke-width="1.5" stroke-dasharray="4,2"/>
+                    <path d="M235 55 Q275 70 280 82" stroke="#9b7eff" stroke-width="1.5"/>
+                    <path d="M235 115 Q275 100 280 95" stroke="#9b7eff" stroke-width="1.5"/>
+                    <!-- Labels -->
+                    <text x="145" y="38" fill="#8892a0" font-size="9">p₁(t)</text>
+                    <text x="140" y="130" fill="#8892a0" font-size="9">p₂(t)</text>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">🧠</span><span class="modal-feature-text"><strong>Hebbian Learning:</strong> Weight updates per step</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">📊</span><span class="modal-feature-text"><strong>Prediction Vector:</strong> 4D output pᵢ(t)</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔗</span><span class="modal-feature-text"><strong>DAG-Based:</strong> Local view processing</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">⏱️</span><span class="modal-feature-text"><strong>Real-Time:</strong> Embedded in main loop</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L3 Consensus Modal -->
+<div class="modal-overlay" id="modal-l3">
+    <div class="modal-container modal-l3">
+        <div class="modal-header">
+            <span class="modal-layer-num">L3</span>
+            <h3 class="modal-title">Consensus Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l3')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L3 Consensus Layer</strong> aggregates prediction vectors from peer nodes using the reputation-weighted median algorithm. It performs deterministic ordering of transactions via the DAG-based total ordering algorithm and drives the shard-consensus protocol for each of the 333 shards independently.
+                <br><br>The consensus mechanism achieves <strong>emergent agreement</strong> without leaders or rounds—nodes converge on transaction ordering through weighted median aggregation of independent predictions, providing robustness against Byzantine adversaries.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Multiple nodes sending predictions -->
+                    <circle cx="60" cy="40" r="18" fill="#ff6b9d" fill-opacity="0.2" stroke="#ff6b9d" stroke-width="1.5"/>
+                    <text x="60" y="44" text-anchor="middle" fill="#ff6b9d" font-size="10" font-weight="700">Node</text>
+                    <circle cx="60" cy="100" r="18" fill="#ff6b9d" fill-opacity="0.2" stroke="#ff6b9d" stroke-width="1.5"/>
+                    <text x="60" y="104" text-anchor="middle" fill="#ff6b9d" font-size="10" font-weight="700">Node</text>
+                    <circle cx="60" cy="150" r="18" fill="#ff6b9d" fill-opacity="0.2" stroke="#ff6b9d" stroke-width="1.5"/>
+                    <text x="60" y="154" text-anchor="middle" fill="#ff6b9d" font-size="10" font-weight="700">Node</text>
+                    <!-- Aggregation box -->
+                    <rect x="160" y="70" width="90" height="50" rx="8" fill="#ff6b9d" fill-opacity="0.2" stroke="#ff6b9d" stroke-width="2"/>
+                    <text x="205" y="92" text-anchor="middle" fill="#ff6b9d" font-size="11" font-weight="600">Weighted</text>
+                    <text x="205" y="108" text-anchor="middle" fill="#ff6b9d" font-size="11" font-weight="600">Median</text>
+                    <!-- Output -->
+                    <rect x="300" y="75" width="80" height="40" rx="8" fill="#ff6b9d" fill-opacity="0.3" stroke="#ff6b9d" stroke-width="2"/>
+                    <text x="340" y="100" text-anchor="middle" fill="#ff6b9d" font-size="11" font-weight="700">Order ✓</text>
+                    <!-- Flow arrows -->
+                    <path d="M80 45 L155 85" stroke="#ff6b9d" stroke-width="1.2"/>
+                    <path d="M80 100 L155 95" stroke="#ff6b9d" stroke-width="1.2"/>
+                    <path d="M80 148 L155 105" stroke="#ff6b9d" stroke-width="1.2"/>
+                    <path d="M255 95 L295 95" stroke="#ff6b9d" stroke-width="2" marker-end="url(#arrow-pink)"/>
+                    <defs><marker id="arrow-pink" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b9d"/></marker></defs>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">📈</span><span class="modal-feature-text"><strong>Aggregation:</strong> Reputation-weighted median</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔀</span><span class="modal-feature-text"><strong>Total Ordering:</strong> DAG-based deterministic</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🎯</span><span class="modal-feature-text"><strong>Shard Consensus:</strong> 333 independent instances</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🛡️</span><span class="modal-feature-text"><strong>Byzantine Resilient:</strong> Reputation-weighted median resists adversarial nodes</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L4 Reputation Modal -->
+<div class="modal-overlay" id="modal-l4">
+    <div class="modal-container modal-l4">
+        <div class="modal-header">
+            <span class="modal-layer-num">L4</span>
+            <h3 class="modal-title">Reputation Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l4')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L4 Reputation Layer</strong> maintains per-node reputation scores using a dual-EMA (Exponential Moving Average) system. It runs <strong>13 behavioral detectors</strong> that monitor node behavior patterns—including consensus deviation, latency anomalies, proposal validity, and message propagation consistency—feeding anomaly signals into the reputation engine.
+                <br><br>Reputation scores are the <strong>single source of truth for node influence</strong> in the network—higher reputation means greater weight in consensus aggregation and proposal selection.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Score visualization -->
+                    <rect x="30" y="30" width="340" height="120" rx="10" fill="#ffc94d" fill-opacity="0.08" stroke="#ffc94d" stroke-width="1"/>
+                    <!-- Axis -->
+                    <line x1="60" y1="130" x2="350" y2="130" stroke="#ffc94d" stroke-width="1" opacity="0.5"/>
+                    <line x1="60" y1="45" x2="60" y2="130" stroke="#ffc94d" stroke-width="1" opacity="0.5"/>
+                    <!-- Bars representing scores -->
+                    <rect x="80" y="70" width="30" height="60" rx="4" fill="#ffc94d" fill-opacity="0.6"/>
+                    <rect x="125" y="50" width="30" height="80" rx="4" fill="#ffc94d" fill-opacity="0.75"/>
+                    <rect x="170" y="85" width="30" height="45" rx="4" fill="#ffc94d" fill-opacity="0.5"/>
+                    <rect x="215" y="55" width="30" height="75" rx="4" fill="#ffc94d" fill-opacity="0.7"/>
+                    <rect x="260" y="65" width="30" height="65" rx="4" fill="#ffc94d" fill-opacity="0.65"/>
+                    <rect x="305" y="45" width="30" height="85" rx="4" fill="#ffc94d" fill-opacity="0.85"/>
+                    <!-- Labels -->
+                    <text x="95" y="145" text-anchor="middle" fill="#8892a0" font-size="9">N1</text>
+                    <text x="140" y="145" text-anchor="middle" fill="#8892a0" font-size="9">N2</text>
+                    <text x="185" y="145" text-anchor="middle" fill="#8892a0" font-size="9">N3</text>
+                    <text x="230" y="145" text-anchor="middle" fill="#8892a0" font-size="9">N4</text>
+                    <text x="275" y="145" text-anchor="middle" fill="#8892a0" font-size="9">N5</text>
+                    <text x="320" y="145" text-anchor="middle" fill="#8892a0" font-size="9">N6</text>
+                    <text x="200" y="25" text-anchor="middle" fill="#ffc94d" font-size="12" font-weight="600">Node Reputation Scores</text>
+                    <!-- EMA lines -->
+                    <polyline points="95,72 140,54 185,88 230,58 275,68 320,48" stroke="#ffc94d" stroke-width="2" fill="none" opacity="0.8"/>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">📊</span><span class="modal-feature-text"><strong>Dual-EMA System:</strong> Long + short term tracking</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">📉</span><span class="modal-feature-text"><strong>Certificate Decay:</strong> Time-based score reduction</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">⚖️</span><span class="modal-feature-text"><strong>Influence Weight:</strong> Prediction aggregation factor</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔍</span><span class="modal-feature-text"><strong>Query API:</strong> For VRF & Consensus layers</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L5 Security Modal -->
+<div class="modal-overlay" id="modal-l5">
+    <div class="modal-container modal-l5">
+        <div class="modal-header">
+            <span class="modal-layer-num">L5</span>
+            <h3 class="modal-title">Security Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l5')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L5 Security Layer</strong> operates <strong>2 adaptive detectors</strong> (Coordination Attack & Adaptive Threat) that receive aggregated anomaly signals from L4's 13 behavioral detectors—the complete stack forms a <strong>15-detector defense system</strong>. It detects sophisticated attack patterns including double-spends, theft attempts, rate violations, and clock skew anomalies across the network.
+                <br><br>This layer can <strong>directly slash reputation scores</strong> for detected attacks, providing real-time defense against malicious actors while maintaining false-positive rates below 0.00% in testing.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Shield background -->
+                    <path d="M200,25 L250,42 L250,85 C250,115 228,142 200,152 C172,142 150,115 150,85 L150,42 Z" fill="#ff6b6b" fill-opacity="0.15" stroke="#ff6b6b" stroke-width="2"/>
+                    <!-- Checkmark -->
+                    <path d="M175,82 L190,97 L225,62" stroke="#48bb78" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Detector indicators around shield -->
+                    <circle cx="80" cy="50" r="20" fill="#ff6b6b" fill-opacity="0.15" stroke="#ff6b6b" stroke-width="1.5"/>
+                    <text x="80" y="55" text-anchor="middle" fill="#ff6b6b" font-size="9" font-weight="600">T00</text>
+                    <circle cx="320" cy="50" r="20" fill="#ff6b6b" fill-opacity="0.15" stroke="#ff6b6b" stroke-width="1.5"/>
+                    <text x="320" y="55" text-anchor="middle" fill="#ff6b6b" font-size="9" font-weight="600">T05</text>
+                    <circle cx="80" cy="130" r="20" fill="#ff6b6b" fill-opacity="0.15" stroke="#ff6b6b" stroke-width="1.5"/>
+                    <text x="80" y="135" text-anchor="middle" fill="#ff6b6b" font-size="9" font-weight="600">T10</text>
+                    <circle cx="320" cy="130" r="20" fill="#ff6b6b" fill-opacity="0.15" stroke="#ff6b6b" stroke-width="1.5"/>
+                    <text x="320" y="135" text-anchor="middle" fill="#ff6b6b" font-size="9" font-weight="600">T20</text>
+                    <!-- Connection lines -->
+                    <line x1="100" y1="50" x2="150" y2="60" stroke="#ff6b6b" stroke-width="1" opacity="0.4"/>
+                    <line x1="300" y1="50" x2="250" y2="60" stroke="#ff6b6b" stroke-width="1" opacity="0.4"/>
+                    <line x1="100" y1="130" x2="150" y2="120" stroke="#ff6b6b" stroke-width="1" opacity="0.4"/>
+                    <line x1="300" y1="130" x2="250" y2="120" stroke="#ff6b6b" stroke-width="1" opacity="0.4"/>
+                    <!-- Title -->
+                    <text x="200" y="172" text-anchor="middle" fill="#ff6b6b" font-size="11" font-weight="600">15 Behavioral Detectors Active</text>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">🔬</span><span class="modal-feature-text"><strong>15 Detectors:</strong> Attack pattern recognition</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">⚠️</span><span class="modal-feature-text"><strong>Anomaly Signals:</strong> Feed to reputation engine</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🚫</span><span class="modal-feature-text"><strong>Auto-Slash:</strong> Direct reputation penalty</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🎯</span><span class="modal-feature-text"><strong>0% False Positive:</strong> Tested accuracy</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L6 Network Modal -->
+<div class="modal-overlay" id="modal-l6">
+    <div class="modal-container modal-l6">
+        <div class="modal-header">
+            <span class="modal-layer-num">L6</span>
+            <h3 class="modal-title">Network Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l6')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L6 Network Layer</strong> manages peer-to-peer communication, message routing, and network topology maintenance. It handles gossip propagation of transactions, predictions, and consensus messages throughout the network.
+                <br><br>This layer implements the <strong>async-network abstraction</strong> that decouples protocol logic from the transport layer, enabling seamless operation over TCP, QUIC, or future transport protocols with minimal changes to upper layers.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Network nodes -->
+                    <circle cx="80" cy="60" r="22" fill="#00d4aa" fill-opacity="0.2" stroke="#00d4aa" stroke-width="2"/>
+                    <circle cx="200" cy="40" r="22" fill="#00d4aa" fill-opacity="0.2" stroke="#00d4aa" stroke-width="2"/>
+                    <circle cx="320" cy="60" r="22" fill="#00d4aa" fill-opacity="0.2" stroke="#00d4aa" stroke-width="2"/>
+                    <circle cx="140" cy="130" r="22" fill="#00d4aa" fill-opacity="0.2" stroke="#00d4aa" stroke-width="2"/>
+                    <circle cx="260" cy="130" r="22" fill="#00d4aa" fill-opacity="0.2" stroke="#00d4aa" stroke-width="2"/>
+                    <!-- Connections (mesh-like) -->
+                    <line x1="102" y1="52" x2="178" y2="46" stroke="#00d4aa" stroke-width="1.5" opacity="0.6"/>
+                    <line x1="222" y1="46" x2="298" y2="52" stroke="#00d4aa" stroke-width="1.5" opacity="0.6"/>
+                    <line x1="96" y1="76" x2="128" y2="114" stroke="#00d4aa" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="212" y1="56" x2="248" y2="116" stroke="#00d4aa" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="304" y1="76" x2="272" y2="116" stroke="#00d4aa" stroke-width="1.5" opacity="0.5"/>
+                    <line x1="162" y1="130" x2="238" y2="130" stroke="#00d4aa" stroke-width="1.5" opacity="0.6"/>
+                    <!-- Gossip animation indicator -->
+                    <circle cx="200" cy="90" r="16" fill="#00d4aa" fill-opacity="0.3" stroke="#00d4aa" stroke-width="1.5" stroke-dasharray="3,2"/>
+                    <text x="200" y="94" text-anchor="middle" fill="#00d4aa" font-size="8" font-weight="600">GOSSIP</text>
+                    <!-- Node labels -->
+                    <text x="80" y="64" text-anchor="middle" fill="#00d4aa" font-size="9">P2P</text>
+                    <text x="200" y="44" text-anchor="middle" fill="#00d4aa" font-size="9">P2P</text>
+                    <text x="320" y="64" text-anchor="middle" fill="#00d4aa" font-size="9">P2P</text>
+                    <text x="140" y="134" text-anchor="middle" fill="#00d4aa" font-size="9">P2P</text>
+                    <text x="260" y="134" text-anchor="middle" fill="#00d4aa" font-size="9">P2P</text>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">🌐</span><span class="modal-feature-text"><strong>P2P Network:</strong> Peer discovery & management</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">📢</span><span class="modal-feature-text"><strong>Gossip Protocol:</strong> Message propagation</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔀</span><span class="modal-feature-text"><strong>Message Routing:</strong> Efficient delivery</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🔌</span><span class="modal-feature-text"><strong>Transport Abstract:</strong> TCP/QUIC agnostic</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L7 Sharding Modal - REBUILT -->
+<div class="modal-overlay" id="modal-l7">
+    <div class="modal-container modal-l7" style="display:flex;flex-direction:column;">
+        <div class="modal-header" style="padding:28px 32px 20px;border-bottom:1px solid rgba(255,255,255,0.08);position:relative;display:flex;align-items:center;gap:16px;">
+            <span class="modal-layer-num">L7</span>
+            <h3 class="modal-title" style="font-size:26px;font-weight:800;color:#ffffff;margin:0;letter-spacing:0.5px;">Sharding Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l7')" style="position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.08);border:none;color:#8892a0;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+        <div class="modal-body" style="padding:24px 32px 32px;overflow-y:auto;">
+            <p style="color:#b8c4d8;font-size:14px;line-height:1.8;margin:0 0 16px 0;"><strong style="color:#ffffff;">L7 Sharding Layer</strong> manages the 333-shard topology, handles cross-shard transaction routing, and maintains shard membership.</p>
+            <p style="color:#b8c4d8;font-size:14px;line-height:1.8;margin:0 0 24px 0;">It implements an account-based sharding scheme where each account is deterministically assigned to a specific shard using consistent hashing. This enables <strong style="color:#ffffff;">horizontal scalability</strong> — each shard processes transactions independently while maintaining consistency through cross-shard coordination.</p>
+            <div style="background:rgba(10,12,25,0.6);border-radius:14px;padding:24px;border:1px solid rgba(155,126,255,0.1);margin-bottom:20px;">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+                    <defs><marker id="arrow-cyan-fix" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00e5c7"/></marker></defs>
+                    <ellipse cx="80" cy="70" rx="50" ry="40" fill="#00e5c7" fill-opacity="0.15" stroke="#00e5c7" stroke-width="2"/>
+                    <text x="80" y="66" text-anchor="middle" fill="#00e5c7" font-size="10" font-weight="600">Shard 1</text>
+                    <text x="80" y="80" text-anchor="middle" fill="#8892a0" font-size="8">Accounts</text>
+                    <ellipse cx="200" cy="70" rx="50" ry="40" fill="#00e5c7" fill-opacity="0.15" stroke="#00e5c7" stroke-width="2"/>
+                    <text x="200" y="66" text-anchor="middle" fill="#00e5c7" font-size="10" font-weight="600">Shard 2</text>
+                    <text x="200" y="80" text-anchor="middle" fill="#8892a0" font-size="8">Accounts</text>
+                    <ellipse cx="320" cy="70" rx="50" ry="40" fill="#00e5c7" fill-opacity="0.15" stroke="#00e5c7" stroke-width="2"/>
+                    <text x="320" y="66" text-anchor="middle" fill="#00e5c7" font-size="10" font-weight="600">Shard N</text>
+                    <text x="320" y="80" text-anchor="middle" fill="#8892a0" font-size="8">Accounts</text>
+                    <path d="M135 65 L165 65" stroke="#00e5c7" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#arrow-cyan-fix)"/>
+                    <path d="M255 65 L265 65" stroke="#00e5c7" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#arrow-cyan-fix)"/>
+                    <rect x="140" y="125" width="120" height="36" rx="8" fill="#00e5c7" fill-opacity="0.2" stroke="#00e5c7" stroke-width="1.5"/>
+                    <text x="200" y="148" text-anchor="middle" fill="#00e5c7" font-size="13" font-weight="700">333 Shards Total</text>
+                </svg>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+                <div style="background:rgba(155,126,255,0.06);padding:14px 16px;border-radius:10px;border:1px solid rgba(155,126,255,0.08);display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:18px;">🔢</span>
+                    <span style="font-size:13px;color:#c8d4e8;line-height:1.4;"><strong>333 Shards:</strong> Parallel processing</span>
+                </div>
+                <div style="background:rgba(155,126,255,0.06);padding:14px 16px;border-radius:10px;border:1px solid rgba(155,126,255,0.08);display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:18px;">👤</span>
+                    <span style="font-size:13px;color:#c8d4e8;line-height:1.4;"><strong>Account-Based:</strong> Deterministic assignment</span>
+                </div>
+                <div style="background:rgba(155,126,255,0.06);padding:14px 16px;border-radius:10px;border:1px solid rgba(155,126,255,0.08);display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:18px;">↔️</span>
+                    <span style="font-size:13px;color:#c8d4e8;line-height:1.4;"><strong>Cross-Shard Routing:</strong> Atomic transfers</span>
+                </div>
+                <div style="background:rgba(155,126,255,0.06);padding:14px 16px;border-radius:10px;border:1px solid rgba(155,126,255,0.08);display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:18px;">📈</span>
+                    <span style="font-size:13px;color:#c8d4e8;line-height:1.4;"><strong>Horizontal Scale:</strong> Linear throughput</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L8 Slot Modal -->
+<div class="modal-overlay" id="modal-l8">
+    <div class="modal-container modal-l8">
+        <div class="modal-header">
+            <span class="modal-layer-num">L8</span>
+            <h3 class="modal-title">Slot Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l8')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L8 Slot Layer</strong> manages First-Come-First-Served (FCFS) slot allocation for new node admission to the network. It tracks available slots, processes join requests, and enforces a proof-of-work anti-spam gate to prevent Sybil attacks.
+                <br><br>This layer controls the <strong>maximum network size</strong> (target: 2,664 nodes) and coordinates the entire onboarding process, ensuring new nodes integrate smoothly without disrupting ongoing consensus operations.
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Available slots -->
+                    <rect x="30" y="40" width="140" height="100" rx="10" fill="#b794f6" fill-opacity="0.1" stroke="#b794f6" stroke-width="1.5"/>
+                    <text x="100" y="65" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">Available Slots</text>
+                    <!-- Slot boxes - CENTERED -->
+                    <rect x="39" y="80" width="24" height="24" rx="4" fill="#48bb78" fill-opacity="0.6" stroke="#48bb78" stroke-width="1.5"/>
+                    <rect x="71" y="80" width="24" height="24" rx="4" fill="#48bb78" fill-opacity="0.6" stroke="#48bb78" stroke-width="1.5"/>
+                    <rect x="103" y="80" width="24" height="24" rx="4" fill="#48bb78" fill-opacity="0.6" stroke="#48bb78" stroke-width="1.5"/>
+                    <rect x="135" y="80" width="24" height="24" rx="4" fill="#b794f6" fill-opacity="0.3" stroke="#b794f6" stroke-width="1.5" stroke-dasharray="3,2"/>
+                    
+                    <!-- PoW Gate -->
+                    <rect x="220" y="50" width="150" height="80" rx="10" fill="#b794f6" fill-opacity="0.15" stroke="#b794f6" stroke-width="2"/>
+                    <text x="295" y="78" text-anchor="middle" fill="#b794f6" font-size="11" font-weight="600">PoW Anti-Spam</text>
+                    <text x="295" y="98" text-anchor="middle" fill="#8892a0" font-size="9">Gate</text>
+                    <!-- Arrow -->
+                    <path d="M175 95 L215 90" stroke="#b794f6" stroke-width="2" marker-end="url(#arrow-purple)"/>
+                    
+                    <!-- New node -->
+                    <circle cx="295" cy="155" r="18" fill="#b794f6" fill-opacity="0.3" stroke="#b794f6" stroke-width="2"/>
+                    <text x="295" y="159" text-anchor="middle" fill="#b794f6" font-size="9" font-weight="600">New</text>
+                    <path d="M295 132 L295 138" stroke="#b794f6" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+                    
+                    <defs><marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b794f6"/></marker></defs>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">🎫</span><span class="modal-feature-text"><strong>FCFS Allocation:</strong> Fair admission order</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">⛏️</span><span class="modal-feature-text"><strong>PoW Gate:</strong> Sybil attack prevention</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">📊</span><span class="modal-feature-text"><strong>Slot Tracking:</strong> Capacity management</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🚪</span><span class="modal-feature-text"><strong>Onboarding:</strong> Smooth integration</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- L9 Finality Modal -->
+<div class="modal-overlay" id="modal-l9">
+    <div class="modal-container modal-l9">
+        <div class="modal-header">
+            <span class="modal-layer-num">L9</span>
+            <h3 class="modal-title">Finality Layer</h3>
+            <button class="modal-close" onclick="closeModal('modal-l9')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-description">
+                <strong>L9 Finality Layer</strong> manages batch finalization, state snapshots, and persistence. It implements the finality store that records which transaction batches have been finalized, the snapshot mechanism for state checkpoints, and the persistence backend for crash recovery.
+                <br><br>This layer ensures <strong>100.05% finality rate<sup>*</sup></strong> by maintaining immutable records of confirmed transaction batches and enabling fast state reconstruction after any node restart or network partition.
+                <p style="margin:12px 0 0 0;font-size:11px;color:#6b7a90;font-style:italic;"><sup>*</sup> The 0.05% above 100% represents transaction fees collected by proposing nodes.</p>
+            </div>
+            <div class="modal-visual">
+                <svg viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Finalized blocks/batches -->
+                    <rect x="30" y="100" width="50" height="50" rx="6" fill="#48bb78" fill-opacity="0.3" stroke="#48bb78" stroke-width="2"/>
+                    <path d="M45,118 L53,126 L68,111" stroke="#48bb78" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <text x="55" y="165" text-anchor="middle" fill="#48bb78" font-size="9">Batch 1</text>
+                    
+                    <rect x="95" y="100" width="50" height="50" rx="6" fill="#48bb78" fill-opacity="0.3" stroke="#48bb78" stroke-width="2"/>
+                    <path d="M110,118 L118,126 L133,111" stroke="#48bb78" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <text x="120" y="165" text-anchor="middle" fill="#48bb78" font-size="9">Batch 2</text>
+                    
+                    <rect x="160" y="100" width="50" height="50" rx="6" fill="#48bb78" fill-opacity="0.3" stroke="#48bb78" stroke-width="2"/>
+                    <path d="M175,118 L183,126 L198,111" stroke="#48bb78" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <text x="185" y="165" text-anchor="middle" fill="#48bb78" font-size="9">Batch 3</text>
+                    
+                    <rect x="225" y="100" width="50" height="50" rx="6" fill="#48bb78" fill-opacity="0.2" stroke="#48bb78" stroke-width="1.5" stroke-dasharray="4,2"/>
+                    <text x="250" y="128" text-anchor="middle" fill="#48bb78" font-size="9">Next</text>
+                    <text x="250" y="165" text-anchor="middle" fill="#8892a0" font-size="9">Pending</text>
+                    
+                    <!-- Persistence icon -->
+                    <rect x="310" y="70" width="70" height="90" rx="8" fill="#48bb78" fill-opacity="0.1" stroke="#48bb78" stroke-width="1.5"/>
+                    <text x="345" y="105" text-anchor="middle" fill="#48bb78" font-size="10" font-weight="600">Storage</text>
+                    <text x="345" y="122" text-anchor="middle" fill="#8892a0" font-size="8">Persistence</text>
+                    <line x1="280" y1="125" x2="305" y2="115" stroke="#48bb78" stroke-width="1.5"/>
+                    
+                    <!-- Snapshot indicator - INSIDE Storage rect -->
+                    <rect x="318" y="128" width="54" height="22" rx="4" fill="#48bb78" fill-opacity="0.25" stroke="#48bb78" stroke-width="0.5"/>
+                    <text x="345" y="143" text-anchor="middle" fill="#48bb78" font-size="8" font-weight="600">Snapshot ✓</text>
+                </svg>
+            </div>
+            <div class="modal-features">
+                <div class="modal-feature"><span class="modal-feature-icon">✅</span><span class="modal-feature-text"><strong>Batch Finalization:</strong> Immutable confirmation</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">📸</span><span class="modal-feature-text"><strong>State Snapshots:</strong> Checkpoint mechanism</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">💾</span><span class="modal-feature-text"><strong>Persistence:</strong> Crash recovery backend</span></div>
+                <div class="modal-feature"><span class="modal-feature-icon">🎯</span><span class="modal-feature-text"><strong>100.05% Rate:</strong> Finality + proposer fees</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DATA FLOW DIAGRAM - CLEAN VERSION WITH WALLET ON LEFT ===== -->
+<section id="dataflow">
+    <div class="df-header">
+        <h2>ANGP Architecture — Inter-Layer Data Flow</h2>
+
+    </div>
+    
+    <div class="diagram-container">
+        <!-- 
+            SVG Diagram - ANGP Data Flow
+            WALLET POSITIONED ON LEFT SIDE (as requested)
+            ViewBox: 0 0 1240 540
+        -->
+        <svg class="diagram-svg" viewBox="0 0 1240 540" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- Arrow markers - larger for visibility -->
+                <marker id="mk-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#9b7eff"/></marker>
+                <marker id="mk-yellow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ffc94d"/></marker>
+                <marker id="mk-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ff6b6b"/></marker>
+                <marker id="mk-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00d4aa"/></marker>
+                <marker id="mk-gray" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#888"/></marker>
+                
+                <!-- Glow filters for emphasis -->
+                <filter id="glow-y"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                <filter id="glow-r"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                
+                <!-- Wallet gradient -->
+                <linearGradient id="walletGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#9b7eff"/>
+                    <stop offset="100%" style="stop-color:#7c5cfc"/>
+                </linearGradient>
+            </defs>
+            
+            <!-- ==================== ARROWS (drawn first, behind boxes) ==================== -->
+            
+            <!-- ARROW 1: Wallet → L1 "signs TX" (violet dashed, CLEAN line from wallet-bottom to L1-top) -->
+            <path class="arrow-line arrow-violet flow-animate" 
+                  d="M185 97 L182 158" 
+                  marker-end="url(#mk-violet)"/>
+            <text x="168" y="125" class="arrow-label" fill="#9b7eff" text-anchor="end">signs TX</text>
+            
+            <!-- ARROW 2: Wallet → L6 "TX Receipts" (violet dashed ANIMATED, curves DOWN left side) -->
+            <path class="arrow-line arrow-violet flow-animate" 
+                  d="M135 85 Q20 150 18 280 Q16 400 95 458" 
+                  marker-end="url(#mk-violet)" opacity="0.6"/>
+            
+            
+            <!-- ARROW 3: L1 → L2 "ordered tx set" (gray dotted, horizontal right) -->
+            <path class="arrow-line arrow-gray flow-animate" 
+                  d="M290 194 L395 194" 
+                  marker-end="url(#mk-gray)"/>
+            <text x="342" y="186" class="arrow-label" fill="#888" text-anchor="middle">order tx sets</text>
+            
+            <!-- ARROW 4: L2 → L3 "4D predictions" (gray dotted, horizontal right) -->
+            <path class="arrow-line arrow-gray flow-animate" 
+                  d="M585 194 L685 194" 
+                  marker-end="url(#mk-gray)"/>
+            <text x="635" y="186" class="arrow-label" fill="#888" text-anchor="middle">4D prediction</text>
+            
+            <!-- ARROW 5: L3 → L4 "consensus median" (YELLOW SOLID, big curve down-left) -->
+            <path class="arrow-line arrow-yellow flow-animate" 
+                  d="M755 232 C755 300 600 320 295 322" 
+                  marker-end="url(#mk-yellow)" filter="url(#glow-y)"/>
+            <text x="520" y="298" class="arrow-label" fill="#ffc94d">consensus median</text>
+            
+            <!-- ARROW 6: L3 → L5 "predicted errors" (gray dotted, short curve down-right) -->
+            <path class="arrow-line arrow-gray flow-animate" 
+                  d="M820 232 Q842 270 832 318" 
+                  marker-end="url(#mk-gray)"/>
+            <text x="850" y="270" class="arrow-label" fill="#888">predicted errors</text>
+            
+            <!-- ARROW 7: L5 → L4 "anomaly penalties" (RED solid, STOPS at L4 card edge!) -->
+            <path class="arrow-line arrow-red flow-animate" 
+                  d="M795 358 C650 370 450 370 293 358" 
+                  marker-end="url(#mk-red)" filter="url(#glow-r)"/>
+            <text x="545" y="380" class="arrow-label" fill="#ff6b6b">anomaly penalties</text>
+            
+            <!-- ARROW 8: L4 → L6 (gray dotted, STRAIGHT vertical down) -->
+            <path class="arrow-line arrow-gray flow-animate" 
+                  d="M182 394 L182 458" 
+                  marker-end="url(#mk-gray)"/>
+            
+            <!-- ARROW 9: L6 → L7 "shard peers" (green, horizontal right) -->
+            <path class="arrow-line arrow-green flow-animate" 
+                  d="M295 492 L395 492" 
+                  marker-end="url(#mk-green)"/>
+            <text x="345" y="484" class="arrow-label" fill="#00d4aa" text-anchor="middle">shard peers</text>
+            
+            <!-- ARROW 10: L7 → L8 "slot assignment" (green, horizontal right) -->
+            <path class="arrow-line arrow-green flow-animate" 
+                  d="M585 492 L685 492" 
+                  marker-end="url(#mk-green)"/>
+            <text x="635" y="484" class="arrow-label" fill="#00d4aa" text-anchor="middle">slot assignment</text>
+            
+            <!-- ARROW 11: L8 → L9 (green, STRAIGHT horizontal - TOUCHES both cards!) -->
+            <path class="arrow-line arrow-green flow-animate" 
+                  d="M892 486 L980 486" 
+                  marker-end="url(#mk-green)"/>
+            
+            <!-- ARROW 12: L9 → L8 "cross-shard receipts" (green dashed, STRAIGHT horizontal - TOUCHES both cards!) -->
+            <path class="arrow-line arrow-green flow-animate" 
+                  d="M983 504 L888 504" 
+                  marker-end="url(#mk-green)" stroke-dasharray="6,3"/>
+            <text x="938" y="498" class="arrow-label" fill="#00d4aa" text-anchor="middle">cross-shard receipts</text>
+            
+            
+            <!-- ==================== LAYER BOXES ==================== -->
+            
+            <!-- WALLET BOX - LEFT SIDE (above and left of L1) -->
+            <g transform="translate(130, 35)">
+                <rect class="layer-box" width="110" height="62" rx="10" ry="10"
+                      fill="url(#walletGrad)" stroke="none"/>
+                <text x="55" y="25" text-anchor="middle" font-size="18">🔑</text>
+                <text x="55" y="43" text-anchor="middle" fill="white" font-weight="700" font-size="12">Wallet</text>
+                <text x="55" y="54" text-anchor="middle" fill="white" font-size="9" opacity="0.85">Ed25519</text>
+            </g>
+            
+            <!-- ROW 1: PROTOCOL LAYER -->
+            
+            <!-- LAYER 1: Transaction -->
+            <g transform="translate(75, 162)">
+                <rect class="layer-box" width="215" height="72" stroke="#4a9eff" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(74,158,255,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#4a9eff">LAYER 1</text>
+                <text x="78" y="21" class="layer-name" fill="#4a9eff">Transaction</text>
+                <text x="14" y="42" class="layer-item" fill="#4a9eff">•</text><text x="24" y="42" class="layer-item">Three-Lane DAG</text>
+                <text x="14" y="55" class="layer-item" fill="#4a9eff">•</text><text x="24" y="55" class="layer-item">Fast / Medium / Slow</text>
+                <text x="14" y="66" class="layer-item" fill="#4a9eff">•</text><text x="24" y="66" class="layer-item" font-size="9.5">MCMC tip selection</text>
+            </g>
+            
+            <!-- LAYER 2: Prediction -->
+            <g transform="translate(400, 162)">
+                <rect class="layer-box" width="185" height="72" stroke="#9b7eff" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(155,126,255,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#9b7eff">LAYER 2</text>
+                <text x="78" y="21" class="layer-name" fill="#9b7eff">Prediction</text>
+                <text x="14" y="42" class="layer-item" fill="#9b7eff">•</text><text x="24" y="42" class="layer-item">Hebbian DAG</text>
+                <text x="14" y="55" class="layer-item" fill="#9b7eff">•</text><text x="24" y="55" class="layer-item">4D embedding space</text>
+                <text x="14" y="66" class="layer-item" fill="#9b7eff">•</text><text x="24" y="66" class="layer-item" font-size="9.5">Adaptive learning rate</text>
+            </g>
+            
+            <!-- LAYER 3: Consensus -->
+            <g transform="translate(695, 162)">
+                <rect class="layer-box" width="195" height="72" stroke="#ff6b9d" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(255,107,157,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#ff6b9d">LAYER 3</text>
+                <text x="78" y="21" class="layer-name" fill="#ff6b9d">Consensus</text>
+                <text x="14" y="42" class="layer-item" fill="#ff6b9d">•</text><text x="24" y="42" class="layer-item">Weighted median (neural)</text>
+                <text x="14" y="55" class="layer-item" fill="#ff6b9d">•</text><text x="24" y="55" class="layer-item">30% cluster weight cap</text>
+                <text x="14" y="66" class="layer-item" fill="#ff6b9d">•</text><text x="24" y="66" class="layer-item" font-size="9.5">VRF proposer selection</text>
+            </g>
+            
+            <!-- ROW 2: SECURITY TIER -->
+            
+            <!-- LAYER 4: Reputation -->
+            <g transform="translate(75, 322)">
+                <rect class="layer-box" width="215" height="72" stroke="#ffc94d" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(255,201,77,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#ffc94d">LAYER 4</text>
+                <text x="78" y="21" class="layer-name" fill="#ffc94d">Reputation</text>
+                <text x="14" y="42" class="layer-item" fill="#ffc94d">•</text><text x="24" y="42" class="layer-item">Dual EMA (fast + slow)</text>
+                <text x="14" y="55" class="layer-item" fill="#ffc94d">•</text><text x="24" y="55" class="layer-item">Reputation-weighted influence</text>
+                <text x="14" y="66" class="layer-item" fill="#ffc94d">•</text><text x="24" y="66" class="layer-item" font-size="9.5">0.7 honest floor</text>
+            </g>
+            
+            <!-- LAYER 5: Security -->
+            <g transform="translate(800, 322)">
+                <rect class="layer-box" width="195" height="72" stroke="#ff6b6b" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(255,107,107,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#ff6b6b">LAYER 5</text>
+                <text x="78" y="21" class="layer-name" fill="#ff6b6b">Security</text>
+                <text x="14" y="42" class="layer-item" fill="#ff6b6b">•</text><text x="24" y="42" class="layer-item">Coordination + Adaptive detect</text>
+                <text x="14" y="55" class="layer-item" fill="#ff6b6b">•</text><text x="24" y="55" class="layer-item">O(N) unified anomaly score</text>
+                <text x="14" y="66" class="layer-item" fill="#ff6b6b">•</text><text x="24" y="66" class="layer-item" font-size="9.5">Cluster-capped penalty</text>
+            </g>
+            
+            <!-- ROW 3: INFRASTRUCTURE -->
+            
+            <!-- LAYER 6: Network -->
+            <g transform="translate(75, 458)">
+                <rect class="layer-box" width="215" height="72" stroke="#00d4aa" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(0,212,170,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#00d4aa">LAYER 6</text>
+                <text x="78" y="21" class="layer-name" fill="#00d4aa">Network</text>
+                <text x="14" y="42" class="layer-item" fill="#00d4aa">•</text><text x="24" y="42" class="layer-item">TCP + libp2p</text>
+                <text x="14" y="55" class="layer-item" fill="#00d4aa">•</text><text x="24" y="55" class="layer-item">GossipSub + Kademlia DHT</text>
+                <text x="14" y="66" class="layer-item" fill="#00d4aa">•</text><text x="24" y="66" class="layer-item" font-size="9.5">Tagged dispatch</text>
+            </g>
+            
+            <!-- LAYER 7: Sharding -->
+            <g transform="translate(400, 458)">
+                <rect class="layer-box" width="185" height="72" stroke="#00e5c7" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(0,229,199,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#00e5c7">LAYER 7</text>
+                <text x="78" y="21" class="layer-name" fill="#00e5c7">Sharding</text>
+                <text x="14" y="42" class="layer-item" fill="#00e5c7">•</text><text x="24" y="42" class="layer-item">333 shards</text>
+                <text x="14" y="55" class="layer-item" fill="#00e5c7">•</text><text x="24" y="55" class="layer-item">SHA-512/256 assignment</text>
+                <text x="14" y="66" class="layer-item" fill="#00e5c7">•</text><text x="24" y="66" class="layer-item" font-size="9.5">Cross-shard receipts</text>
+            </g>
+            
+            <!-- LAYER 8: Slot -->
+            <g transform="translate(695, 458)">
+                <rect class="layer-box" width="195" height="72" stroke="#b794f6" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(183,148,246,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#b794f6">LAYER 8</text>
+                <text x="78" y="21" class="layer-name" fill="#b794f6">Slot</text>
+                <text x="14" y="42" class="layer-item" fill="#b794f6">•</text><text x="24" y="42" class="layer-item">Reputation-weighted VRF</text>
+                <text x="14" y="55" class="layer-item" fill="#b794f6">•</text><text x="24" y="55" class="layer-item">2,664 active nodes</text>
+                <text x="14" y="66" class="layer-item" fill="#b794f6">•</text><text x="24" y="66" class="layer-item" font-size="9.5">PoW SHA-512/256 verify</text>
+            </g>
+            
+            <!-- LAYER 9: Finality (moved further right for more spacing) -->
+            <g transform="translate(985, 458)">
+                <rect class="layer-box" width="175" height="72" stroke="#48bb78" stroke-width="1.5"/>
+                <rect x="12" y="10" width="58" height="16" rx="3" fill="rgba(72,184,120,0.2)"/>
+                <text x="41" y="21" text-anchor="middle" class="layer-num" fill="#48bb78">LAYER 9</text>
+                <text x="78" y="21" class="layer-name" fill="#48bb78">Finality</text>
+                <text x="14" y="42" class="layer-item" fill="#48bb78">•</text><text x="24" y="42" class="layer-item">Batch finalization</text>
+                <text x="14" y="55" class="layer-item" fill="#48bb78">•</text><text x="24" y="55" class="layer-item">70% approval threshold</text>
+                <text x="14" y="66" class="layer-item" fill="#48bb78">•</text><text x="24" y="66" class="layer-item" font-size="9.5">Batch DAG commit</text>
+            </g>
+            
+            <!-- ==================== SIDE LABELS (aligned with each row) ==================== -->
+            
+            <!-- PROTOCOL - ALIGNED with other labels -->
+            <text x="1175" y="152" class="side-label" fill="#4a9eff" transform="rotate(90,1175,152)">PROTOCOL</text>
+            
+            <!-- SECURITY TIER - ALIGNED with PROTOCOL and INFRASTRUCTURE -->
+            <text x="1175" y="283" class="side-label" fill="#ffc94d" transform="rotate(90,1175,283)">SECURITY TIER</text>
+            
+            <!-- INFRASTRUCTURE - ALIGNED with PROTOCOL and SECURITY TIER, RIGHT of L9 card -->
+            <text x="1175" y="414" class="side-label" fill="#00d4aa" transform="rotate(90,1175,414)">INFRASTRUCTURE</text>
+            
+        </svg>
+    </div>
+    
+    <!-- Data Flow Description -->
+    <div class="df-desc">
+        <h4>Data Flow</h4>
+        <ul>
+            <li><strong>L1:</strong> Wallet [Ed25519] signs transactions and submits them into the Three-Lane DAG for deterministic ordering.</li>
+            <li><strong>L2-L3:</strong> Hebbian 4D predictions feed weighted-median neural consensus; consensus median and prediction errors flow to L4/L5.</li>
+            <li><strong>L4-L5:</strong> Dual-EMA reputation weights influence consensus; Security detects anomalies (Coordination + Adaptive) and sends penalties to L4.</li>
+            <li><strong>L6-L8:</strong> Network transports all messages via P2P gossip; shards assign nodes by address hash; VRF selects proposers per slot.</li>
+            <li><strong>L9:</strong> Batch finalization commits approved transactions every 5 steps at 70% threshold; receipts flow back through network layer.</li>
+        </ul>
+    </div>
+</section>
+
+<!-- ===== PERFORMANCE SECTION ===== -->
+<section id="performance">
+    <div class="perf-container">
+        <!-- HEADER ROW: Title left, Measured right -->
+        <div class="perf-header-row">
+            <div class="perf-header-left">
+                <h2>Performance</h2>
+                <p class="perf-subtitle">Experimental Setup</p>
+                <p class="perf-desc">Results were measured in a controlled simulation environment using an 8-Core CPU and 64 GB RAM, validating scalability, finality, and resilience under adversarial conditions. No exotic hardware, performance is achieved through adaptive architecture and optimization</p>
+            </div>
+            <div class="perf-header-right">
+                <span class="measured-label">Measured</span>
+                <span class="tps-value" data-animate="100,000+">100,000+</span>
+                <span class="tps-unit">TPS/SHARD</span>
+            </div>
+        </div>
+        
+        <!-- STATS ROW: 5 items evenly spaced -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <svg class="stat-svg-icon" viewBox="0 0 40 40" fill="none"><path d="M8 12h24M8 20h24M8 28h24" stroke="#9b7eff" stroke-width="2"/><rect x="4" y="8" width="32" height="24" rx="2" stroke="#9b7eff" stroke-width="1.5"/></svg>
+                <div class="stat-number">333</div>
+                <div class="stat-label">SHARDS</div>
+            </div>
+            <div class="stat-item">
+                <svg class="stat-svg-icon" viewBox="0 0 40 40" fill="none"><circle cx="14" cy="14" r="5" stroke="#9b7eff" stroke-width="1.5"/><circle cx="26" cy="14" r="5" stroke="#9b7eff" stroke-width="1.5"/><path d="M20 26a8 8 0 0 0-6-3c-2.5 0-4.5 1-6 3M26 23a8 8 0 0 0-6 3" stroke="#9b7eff" stroke-width="1.5"/></svg>
+                <div class="stat-number">8</div>
+                <div class="stat-label">NODES PER SHARD</div>
+            </div>
+            <div class="stat-item">
+                <svg class="stat-svg-icon" viewBox="0 0 40 40" fill="none"><circle cx="10" cy="10" r="2" fill="#9b7eff"/><circle cx="20" cy="10" r="2" fill="#9b7eff"/><circle cx="30" cy="10" r="2" fill="#9b7eff"/><circle cx="10" cy="20" r="2" fill="#9b7eff"/><circle cx="20" cy="20" r="2" fill="#9b7eff"/><circle cx="30" cy="20" r="2" fill="#9b7eff"/><circle cx="15" cy="30" r="2" fill="#9b7eff"/><circle cx="25" cy="30" r="2" fill="#9b7eff"/></svg>
+                <div class="stat-number">2,664</div>
+                <div class="stat-label">ACTIVE NODES</div>
+            </div>
+            <div class="stat-item">
+                <svg class="stat-svg-icon" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="14" stroke="#9b7eff" stroke-width="1.5"/><path d="M13 20l4 4 10-10" stroke="#9b7eff" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="stat-number" data-animate="100%">100%</div>
+                <div class="stat-label">FINALIZATION RATE</div>
+            </div>
+            <div class="stat-item">
+                <svg class="stat-svg-icon" viewBox="0 0 40 40" fill="none"><path d="M20 6L8 14v8c0 7.5 5.2 14.5 12 16 6.8-1.5 12-8.5 12-16v-8L20 6z" stroke="#9b7eff" stroke-width="1.5"/><path d="M16 20l3 3 6-6" stroke="#9b7eff" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="stat-number">0.00%</div>
+                <div class="stat-label">REJECTION RATE</div>
+            </div>
+        </div>
+        
+        <!-- CHARTS ROW: 3 boxes -->
+        <div class="charts-row">
+            <!-- Box 1: Projected Network Throughput -->
+            <div class="chart-box">
+                <div class="chart-label">PROJECTED NETWORK THROUGHPUT</div>
+                <div class="chart-body-simple">
+                    <div class="chart-tl" data-animate="50,000,000+">50,000,000+</div>
+                    <div class="chart-tl-sub">TPS</div>
+                </div>
+            </div>
+            
+            <!-- Box 2: Adversarial Testing -->
+            <div class="chart-box">
+                <div class="chart-label">ADVERSARIAL TESTING</div>
+                <div class="chart-body-dual">
+                    <div class="chart-corner-tl">
+                        <div class="chart-val-main" data-animate="10-90%">10-90%</div>
+                        <div class="chart-val-sub">ATTACKER DENSITY</div>
+                    </div>
+                    <div class="chart-corner-br">
+                        <div class="chart-val-xs">BENCHMARK PASSED</div>
+                        <div class="chart-val-main-br" data-animate="100%">100%</div>
+                        <div class="chart-val-sub-br">ELIMINATION RATE</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Box 3: Reputation Separation -->
+            <div class="chart-box">
+                <div class="chart-label">REPUTATION SEPARATION</div>
+                <div class="chart-body-dual">
+                    <div class="chart-corner-tl">
+                        <div class="chart-val-main" data-animate="0.9920">0.9920</div>
+                        <div class="chart-val-sub">SEPARATION ΔR</div>
+                    </div>
+                    <div class="chart-corner-br">
+                        <div class="chart-val-xs">ANOMALY PRECISION</div>
+                        <div class="chart-val-main-br">0.00%</div>
+                        <div class="chart-val-sub-br">FALSE POSITIVE</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECURITY ROW: 3 items -->
+        <div class="security-row">
+            <div class="security-card">
+                <svg class="security-icon" viewBox="0 0 36 36" fill="none"><path d="M18 4L6 11v7c0 6.5 4.7 12.6 12 14 7.3-1.4 12-7.5 12-14v-7L18 4z" stroke="#9b7eff" stroke-width="1.5"/><path d="M13 18l3 3 7-7" stroke="#9b7eff" stroke-width="2" stroke-linecap="round"/></svg>
+                <div class="security-content">
+                    <div class="security-title">100% DOUBLE-SPEND PROTECTION</div>
+                    <div class="security-desc">Tested under <span class="hl-purple">10–90%</span> adversarial node density</div>
+                </div>
+            </div>
+            <div class="security-card">
+                <svg class="security-icon" viewBox="0 0 36 36" fill="none"><path d="M18 4L6 11v7c0 6.5 4.7 12.6 12 14 7.3-1.4 12-7.5 12-14v-7L18 4z" stroke="#9b7eff" stroke-width="1.5"/><path d="M18 11l-3 1.5v3c0 2.7 1.4 5.2 3.5 6.5l.5.3V11z" fill="#9b7eff" opacity="0.6"/><path d="M18 11l3 1.5v3c0 2.7-1.4 5.2-3.5 6.5l-.5.3V11z" fill="#9b7eff" opacity="0.4"/></svg>
+                <div class="security-content">
+                    <div class="security-title">100% THIEF PROTECTION</div>
+                    <div class="security-desc">Tested under <span class="hl-purple">10–90%</span> adversarial node density</div>
+                </div>
+            </div>
+            <div class="security-card">
+                <svg class="security-icon" viewBox="0 0 36 36" fill="none"><path d="M18 6a4 4 0 0 1 4 4v2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2h2v-2a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v2h4v-2a2 2 0 0 0-2-2zm-1 9a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm2 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z" fill="#9b7eff"/></svg>
+                <div class="security-content">
+                    <div class="security-title">IMMUNE NETWORK</div>
+                    <div class="security-desc">Detect. Defend. Recover.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== PAPERS SECTION ===== -->
+<section id="papers">
+    <div class="papers-container">
+        <h2>Research Papers</h2>
+        <p class="papers-subtitle">Research publication and technical papers</p>
+        <div class="papers-grid">
+            <a href="https://zenodo.org/records/20523176" target="_blank" class="paper-card">
+                <div class="paper-icon">📄</div>
+                <h4>Paper 1</h4>
+                <span class="paper-link">View on Zenodo →</span>
+            </a>
+            <a href="https://zenodo.org/records/20586893" target="_blank" class="paper-card">
+                <div class="paper-icon">📄</div>
+                <h4>Paper 2</h4>
+                <span class="paper-link">View on Zenodo →</span>
+            </a>
+            <a href="https://zenodo.org/records/20744982" target="_blank" class="paper-card">
+                <div class="paper-icon">📄</div>
+                <h4>Paper 3</h4>
+                <span class="paper-link">View on Zenodo →</span>
+            </a>
+            <a href="https://zenodo.org/records/21185331" target="_blank" class="paper-card paper-manifesto">
+                <div class="paper-icon">📜</div>
+                <h4>Manifesto</h4>
+                <span class="paper-link">View on Zenodo →</span>
+            </a>
+            <a href="https://github.com/NeuroGraph-ANGP/neurograph-simulations/raw/main/NeuroGraph_ANGP_v4.3.1_Technical_Paper-13.pdf" target="_blank" class="paper-card paper-whitepaper">
+                <div class="paper-icon">📘</div>
+                <h4>Whitepaper</h4>
+                <span class="paper-link">v4.3.1 Technical Paper →</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== ROADMAP SECTION ===== -->
+<section id="roadmap" style="padding:80px 40px;margin-top:180px;text-align:center;position:relative;z-index:2;background:linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(155,126,255,0.05) 50%, rgba(10,10,10,0) 100%);overflow:hidden;scroll-margin-top:-100px;">
+    <div style="max-width:1200px;margin:0 auto;position:relative;">
+        <h2 style="font-size:28px;font-weight:700;color:#ffffff;margin-bottom:8px;letter-spacing:1px;">Roadmap</h2>
+        <p style="color:#9b7eff;font-size:14px;font-weight:600;letter-spacing:2px;margin-bottom:110px;text-transform:uppercase;">From Research to Real-World Infrastructure</p>
+        
+        <!-- Timeline Container -->
+        <div class="roadmap-container">
+            <!-- Timeline Line -->
+            <div class="timeline-line"></div>
+            
+            <!-- Phase 1 -->
+            <div class="phase-card" onclick="openRoadmapModal(1)">
+                <div class="phase-glow"></div>
+                <div class="phase-inner">
+                    <div class="phase-badge">PHASE 1</div>
+                    <div class="phase-date">Q3 2026</div>
+                    <div class="phase-title">SIMNET</div>
+                    <div class="phase-arrow">→</div>
+                </div>
+            </div>
+            
+            <!-- Phase 2 -->
+            <div class="phase-card phase-down" onclick="openRoadmapModal(2)">
+                <div class="phase-glow"></div>
+                <div class="phase-inner">
+                    <div class="phase-badge">PHASE 2</div>
+                    <div class="phase-date">Q4 2026</div>
+                    <div class="phase-title">DEVNET</div>
+                    <div class="phase-arrow">→</div>
+                </div>
+            </div>
+            
+            <!-- Phase 3 -->
+            <div class="phase-card" onclick="openRoadmapModal(3)">
+                <div class="phase-glow"></div>
+                <div class="phase-inner">
+                    <div class="phase-badge">PHASE 3</div>
+                    <div class="phase-date">Q1 2027</div>
+                    <div class="phase-title">TESTNET</div>
+                    <div class="phase-arrow">→</div>
+                </div>
+            </div>
+            
+            <!-- Phase 4 -->
+            <div class="phase-card phase-down" onclick="openRoadmapModal(4)">
+                <div class="phase-glow"></div>
+                <div class="phase-inner">
+                    <div class="phase-badge">PHASE 4</div>
+                    <div class="phase-date">Q2 2027</div>
+                    <div class="phase-title">MAINNET</div>
+                    <div class="phase-arrow">→</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Roadmap Modal -->
+<div id="roadmap-modal" class="roadmap-modal" onclick="closeRoadmapModal(event)">
+    <div class="roadmap-modal-content" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeRoadmapModal()">&times;</button>
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<style>
+/* Roadmap Styles */
+.roadmap-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 60px 15px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 12px;
+}
+
+.timeline-line {
+    position: absolute;
+    top: 50%;
+    left: 60px;
+    right: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #9b7eff 0%, #00d4aa 50%, #9b7eff 100%);
+    z-index: 1;
+    box-shadow: 0 0 15px rgba(155,126,255,0.5);
+}
+
+.phase-card {
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateY(-120px);
+}
+
+.phase-card.phase-down {
+    transform: translateY(80px);
+}
+
+.phase-card:hover {
+    transform: translateY(-130px) scale(1.05);
+}
+
+.phase-card.phase-down:hover {
+    transform: translateY(70px) scale(1.05);
+}
+
+.phase-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, rgba(155,126,255,0.6), rgba(0,212,170,0.4), rgba(155,126,255,0.3));
+    border-radius: 18px;
+    filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+}
+
+.phase-card:hover .phase-glow {
+    opacity: 1;
+}
+
+.phase-inner {
+    width: 145px;
+    padding: 28px 14px 24px;
+    background: linear-gradient(180deg, rgba(25,28,47,0.95) 0%, rgba(15,17,30,0.98) 100%);
+    border: 1px solid rgba(155,126,255,0.25);
+    border-radius: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.phase-card:hover .phase-inner {
+    border-color: rgba(155,126,255,0.6);
+    box-shadow: 0 15px 45px rgba(155,126,255,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.phase-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #9b7eff, #00d4aa);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.phase-card:hover .phase-inner::before {
+    opacity: 1;
+}
+
+.phase-badge {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #9b7eff;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(155,126,255,0.5);
+}
+
+.phase-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.phase-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #00d4aa;
+    line-height: 1.5;
+    letter-spacing: 1px;
+}
+
+.phase-arrow {
+    margin-top: 16px;
+    font-size: 18px;
+    color: rgba(155,126,255,0.5);
+    transition: all 0.3s ease;
+}
+
+.phase-card:hover .phase-arrow {
+    color: #9b7eff;
+    transform: translateX(5px);
+}
+
+/* Final phase special styling */
+.phase-final .phase-inner {
+    border-color: rgba(0,212,170,0.35);
+}
+
+.phase-final:hover .phase-inner {
+    border-color: rgba(0,212,170,0.7);
+    box-shadow: 0 15px 45px rgba(0,212,170,0.25);
+}
+
+/* Modal Styles */
+.roadmap-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.roadmap-modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.roadmap-modal-content {
+    background: linear-gradient(180deg, rgba(20,22,38,0.98) 0%, rgba(10,12,22,0.99) 100%);
+    border: 1px solid rgba(155,126,255,0.3);
+    border-radius: 20px;
+    padding: 0;
+    width: 90%;
+    max-width: 520px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 25px 80px rgba(0,0,0,0.6), 0 0 40px rgba(155,126,255,0.15);
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255,255,255,0.05);
+    color: #888;
+    font-size: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.modal-close:hover {
+    background: rgba(255,107,157,0.2);
+    color: #ff6b9d;
+    transform: rotate(90deg);
+}
+
+#modal-body {
+    padding: 40px 32px 32px;
+}
+
+.modal-phase-header {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(155,126,255,0.15);
+}
+
+.modal-phase-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #9b7eff;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(155,126,255,0.5);
+}
+
+.modal-phase-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+}
+
+.modal-phase-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #00d4aa;
+    letter-spacing: 2px;
+}
+
+.modal-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.modal-items li {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    padding: 14px 0 14px 36px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    position: relative;
+    line-height: 1.5;
+    transition: all 0.3s ease;
+}
+
+.modal-items li:hover {
+    color: #ffffff;
+    padding-left: 44px;
+}
+
+.modal-items li::before {
+    content: '◆';
+    position: absolute;
+    left: 12px;
+    color: #9b7eff;
+    font-size: 10px;
+    top: 15px;
+}
+
+.modal-items li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive */
+@media(max-width:1024px){
+    .roadmap-container {
+        flex-wrap: wrap;
+        gap: 80px;
+        justify-content: center;
+    }
+    .timeline-line {
+        display: none;
+    }
+    .phase-card, .phase-card.phase-down {
+        transform: translateY(0) !important;
+    }
+    .phase-card:hover, .phase-card.phase-down:hover {
+        transform: translateY(-5px) scale(1.03) !important;
+    }
+}
+</style>
+
+<script>
+// Roadmap Modal Data
+const roadmapData = {
+    1: {
+        num: "PHASE 1",
+        date: "Q3 2026",
+        title: "◆ SIMNET",
+        items: [
+            "Simnet: Validated",
+            "Milestone: Pre-Seed Capital Activation",
+            "Team: Core Team Recruitment"
+        ]
+    },
+    2: {
+        num: "PHASE 2",
+        date: "Q4 2026",
+        title: "◆ DEVNET",
+        items: [
+            "Production Migration: Transition the ANGP protocol from Rust simulator to production-ready multi-threaded network layers",
+            "Internal Testnet (Devnet): Deploy a closed 100-node network to verify the multi-shard routing"
+        ]
+    },
+    3: {
+        num: "PHASE 3",
+        date: "Q1 2027",
+        title: "◆ TESTNET",
+        items: [
+            "Testnet: Public Incentivized Testnet & Protocol Security Audit",
+            "Security: Protocol Security Audit"
+        ]
+    },
+    4: {
+        num: "PHASE 4",
+        date: "Q2 2027",
+        title: "◆ MAINNET",
+        items: [
+            "Deployment: Official Public Mainnet Launch",
+            "Expansion: Open the 2,664 active node slots using the TCFS framework"
+        ]
+    }
+};
+
+function openRoadmapModal(phaseNum) {
+    const data = roadmapData[phaseNum];
+    const modal = document.getElementById('roadmap-modal');
+    const body = document.getElementById('modal-body');
+    
+    let itemsHtml = data.items.map(item => `<li>${item}</li>`).join('');
+    
+    body.innerHTML = `
+        <div class="modal-phase-header">
+            <div class="modal-phase-num">${data.num}</div>
+            <div class="modal-phase-date">${data.date}</div>
+            <div class="modal-phase-title">${data.title}</div>
+        </div>
+        <ul class="modal-items">
+            ${itemsHtml}
+        </ul>
+    `;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRoadmapModal(event) {
+    if (!event || event.target === event.currentTarget) {
+        const modal = document.getElementById('roadmap-modal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeRoadmapModal();
+});
+
+// Center Roadmap when navigating to it
+function centerRoadmap() {
+    const roadmap = document.getElementById('roadmap');
+    if (roadmap && window.location.hash === '#roadmap') {
+        setTimeout(() => {
+            const rect = roadmap.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetScroll = scrollTop + rect.top - (window.innerHeight - rect.height) / 2 + 50;
+            window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        }, 100);
+    }
+}
+
+// Handle Roadmap link clicks
+document.querySelectorAll('a[href="#roadmap"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const roadmap = document.getElementById('roadmap');
+        if (roadmap) {
+            const rect = roadmap.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetScroll = scrollTop + rect.top - (window.innerHeight - rect.height) / 2 + 50;
+            window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+            history.pushState(null, null, '#roadmap');
+        }
+    });
+});
+
+// On page load with #roadmap hash
+window.addEventListener('load', centerRoadmap);
+window.addEventListener('hashchange', centerRoadmap);
+</script>
+
+<footer>© 2026 ANGP — NeuroGraph Protocol. Beyond Blockchain. Beyond Consensus. &nbsp;|&nbsp; <a href="https://github.com/NeuroGraph-ANGP/neurograph-simulations" target="_blank" style="color:#9b7eff;text-decoration:none;">GitHub</a></footer>
+
+<script>
+    // Animate layer boxes
+    document.querySelectorAll('.layer-box').forEach((el,i)=>{
+        el.style.opacity='0';
+        el.style.transformOrigin='center';
+        el.style.transition=`all 0.4s ease ${i*0.05}s`;
+        new IntersectionObserver(e=>{if(e[0].isIntersecting){el.style.opacity='1';}}).observe(el);
+    });
+    
+    // Animate Performance numbers - EACH animates when IT becomes visible
+    const animateNumbers = () => {
+        const animElements = document.querySelectorAll('[data-animate]');
+        
+        animElements.forEach((target) => {
+            // Create individual observer for EACH element
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !entry.target.dataset.animated) {
+                        entry.target.dataset.animated = 'true';
+                        
+                        const finalText = entry.target.dataset.animate;
+                        const duration = 1800; // 1.8 seconds per number
+                        const startTime = performance.now();
+                        
+                        // Parse the final value
+                        let isPercent = finalText.includes('%');
+                        let isM = finalText.includes('M');
+                        let isRange = finalText.includes('-');
+                        let plusAtEnd = finalText.endsWith('+');  // + at end (suffix)
+                        let plusAtStart = finalText.startsWith('+');  // + at beginning (prefix)
+                        
+                        // Extract numeric value
+                        let numStr = finalText.replace(/[^0-9.]/g, '');
+                        let targetVal = parseFloat(numStr);
+                        
+                        // For range like 10-90%, animate the first number
+                        if (isRange) {
+                            numStr = finalText.split('-')[0].replace(/[^0-9]/g, '');
+                            targetVal = parseFloat(numStr);
+                        }
+                        
+                        const animate = (currentTime) => {
+                            const elapsed = currentTime - startTime;
+                            const progress = Math.min(elapsed / duration, 1);
+                            
+                            // Easing function - ease out cubic
+                            const easeOut = 1 - Math.pow(1 - progress, 3);
+                            
+                            let currentVal = targetVal * easeOut;
+                            
+                            // Format the number
+                            let displayValue;
+                            if (isM) {
+                                // Handle M values: 35M+ shows "0M+" -> "35M+"
+                                displayValue = currentVal.toFixed(0) + 'M' + (plusAtEnd ? '+' : '');
+                            } else if (isRange) {
+                                displayValue = Math.round(currentVal) + '-90%';
+                            } else if (isPercent) {
+                                if (targetVal >= 100) {
+                                    displayValue = currentVal.toFixed(2) + '%';
+                                } else if (targetVal < 1 && targetVal > 0) {
+                                    displayValue = currentVal.toFixed(4);
+                                } else {
+                                    displayValue = Math.round(currentVal) + '%';
+                                }
+                            } else if (plusAtEnd || plusAtStart) {
+                                // Handle suffix: 10,000+ shows "0+" -> "10,000+"
+                                // Handle prefix: +X shows "+0" -> "+X"
+                                let formattedNum = Math.round(currentVal).toLocaleString();
+                                displayValue = plusAtStart ? '+' + formattedNum : formattedNum + '+';
+                            } else if (Number.isInteger(targetVal)) {
+                                displayValue = Math.round(currentVal).toLocaleString();
+                            } else {
+                                displayValue = currentVal.toFixed(targetVal.toString().split('.')[1]?.length || 0);
+                            }
+                            
+                            entry.target.textContent = displayValue;
+                            
+                            if (progress < 1) {
+                                requestAnimationFrame(animate);
+                            } else {
+                                // Ensure final value is exact
+                                entry.target.textContent = finalText;
+                            }
+                        };
+                        
+                        requestAnimationFrame(animate);
+                    }
+                });
+            }, { 
+                threshold: 0.5,  // Trigger when 50% of element is visible
+                rootMargin: '0px 0px -50px 0px'  // Slight offset for better timing
+            });
+            
+            observer.observe(target);
+        });
+    };
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', animateNumbers);
+    } else {
+        animateNumbers();
+    }
+</script>
+
+<!-- ===== LAYER MODAL SCRIPT ===== -->
+<script>
+// Modal functions
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+            modal.classList.remove('active');
+        });
+        document.body.style.overflow = '';
+    }
+});
+
+// Add click handlers to layer cards
+document.addEventListener('DOMContentLoaded', function() {
+    const layerCards = document.querySelectorAll('.layer-card');
+    layerCards.forEach((card, index) => {
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', function() {
+            const layerNum = index + 1;
+            openModal('modal-l' + layerNum);
+        });
+    });
+});
+</script>
+
+</body>
+</html>
