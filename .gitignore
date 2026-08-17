@@ -1,0 +1,43 @@
+﻿# ============================================================
+# NeuroGraph ANGP - PROPRIETARY SOURCE PROTECTION
+# ============================================================
+
+# Cod Rust sursa (IP PROTEJAT - NU URCĂ!)
+*.rs
+src/
+src-bak/
+examples/
+examples-bak/
+benches/
+tests/rs/
+
+# Config Rust (nu pe GitHub)
+Cargo.toml
+Cargo.toml.*
+Cargo.lock
+*.cargo
+
+# Build artifacts (target/ e uriaș)
+target/
+debug/
+release/
+**/target/
+**/release/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp/Logs
+*.log
+*.tmp
+*~
+*.bak
+*~
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
