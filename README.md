@@ -18,7 +18,7 @@
 
 ## Quick Start
 
-| | RUN-TESTS-A.ps1 | RUN-NG-BENCHMARK.ps1 |
+| | RUN-TESTS-A | RUN-NG-BENCHMARK |
 |:---|:---|:---|
 | **Mode** | Single shard | Multi-shard (parallel) |
 | **Nodes** | 2664 | 2664 (333 x 8) |
