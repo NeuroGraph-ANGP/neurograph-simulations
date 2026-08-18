@@ -18,29 +18,7 @@
 
 ## Quick Start
 
-Clone the repo and run setup:
-
-```powershell
-git clone https://github.com/NeuroGraph-ANGP/neurograph-simulations.git
-cd neurograph-simulations
-.\setup.ps1
-```
-
----
-
-## Test Scripts
-
-Choose one script and click Copy to run it:
-
-```powershell
-.\RUN-TESTS-A.ps1
-```
-
-```powershell
-.\RUN-NG-BENCHMARK.ps1
-```
-
-| | .\RUN-TESTS-A.ps1 | .\RUN-NG-BENCHMARK.ps1 |
+| | RUN-TESTS-A.ps1 | RUN-NG-BENCHMARK.ps1 |
 |:---|:---|:---|
 | **Mode** | Single shard | Multi-shard (parallel) |
 | **Nodes** | 2664 | 2664 (333 x 8) |
