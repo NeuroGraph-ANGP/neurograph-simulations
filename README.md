@@ -61,8 +61,9 @@ cd neurograph-simulations
 2. Run `.\RUN-TESTS-A.ps1` for single-shard security analysis
 3. Compare your results with the paper's reported values
 4. See the Whitepaper and technical papers at: https://neurograph-angp.surge.sh/#
-Note: For best TPS results, run simulations on a cool system shortly after restart, 
-as prolonged runtime and thermal throttling can significantly reduce observed throughput.
+   Note: For best TPS result, run simulation on a cool system shortly after restart,
+   as prolonged runtime and thermal throttling can significantly reduced observed throughput.
+
 ---
 
 ## System Requirements
