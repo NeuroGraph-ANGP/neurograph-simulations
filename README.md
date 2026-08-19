@@ -62,8 +62,8 @@ cd neurograph-simulations
 3. Compare your results with the paper's reported values
 4. See the Whitepaper and technical papers at: https://neurograph-angp.surge.sh/#
 
-Note: For best TPS results, run simulations on a cool system shortly after restart, 
-as prolonged runtime and thermal throttling can significantly reduce observed throughput.
+ Note: For best TPS results, run simulations on a cool system shortly after restart, 
+ as prolonged runtime and thermal throttling can significantly reduce observed throughput.
 ---
 
 ## System Requirements
