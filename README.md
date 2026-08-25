@@ -51,16 +51,9 @@ cd neurograph-simulations
 .\RUN-NG-BENCHMARK.ps1
 ```
 
-**3. Compare** your results with the ANGP paper
+**3. Compare** your results with the  paper's reported values
 
----
-
-## Reproducing Paper Results
-
-1. Run `.\RUN-NG-BENCHMARK.ps1` for the full multi-shard benchmark
-2. Run `.\RUN-TESTS-A.ps1` for single-shard security analysis
-3. Compare your results with the paper's reported values
-4. See the Whitepaper and technical papers at: https://neurograph-angp.surge.sh/#
+**4. Whitepaper:** https://neurograph-angp.surge.sh/whitepaper.html
 
    **Note**: For best TPS results, run simulation on a cool system shortly after restart,
    as prolonged runtime and thermal throttling can significantly reduced observed throughput.
