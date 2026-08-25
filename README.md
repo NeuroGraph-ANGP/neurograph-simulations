@@ -64,9 +64,10 @@ cd neurograph-simulations
 
   **Note 1**: For best TPS results, run simulation on a cool system shortly after restart,
    as prolonged runtime and thermal throttling can significantly reduced observed throughput.
-  **Note 2**: Important: If you are running the simulations on a laptop, make sure it is plugged 
-  into AC power. Running on battery can significantly reduce CPU performance due to power-saving 
-  and thermal-management limits, resulting in substantially lower simulation performance and TPS.
+   
+  **Important**: If you are running the simulations on a laptop, make sure it is plugged 
+   into AC power. Running on battery can significantly reduce CPU performance due to power-saving 
+   and thermal-management limits, resulting in substantially lower simulation performance and TPS.
 ---
 
 ## System Requirements
