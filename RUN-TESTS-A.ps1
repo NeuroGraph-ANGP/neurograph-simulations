@@ -2,6 +2,7 @@
 # NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A
 # 2664 Nodes | 37 Attacker Types (T0-T36) | Behavioral Strategies
 # PowerShell — 37 attack types + individual options
+# [FIXED] Option50 bug corrected - was calling Option90 (2026-08-26)
 # =============================================================================
 #
 # 37 ATTACKER TYPES (T0-T36):
