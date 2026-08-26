@@ -3,6 +3,7 @@
 # 2664 Nodes | 37 Attacker Types (T0-T36) | Behavioral Strategies
 # PowerShell - 37 attack types + individual options
 # =============================================================================
+# [WINDOWS-COMPAT] 2026-08-26 - All special chars removed for PowerShell
 #
 # 37 ATTACKER TYPES (T0-T36):
 #   T0-T15 (16 basic):
