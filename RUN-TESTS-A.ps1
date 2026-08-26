@@ -35,12 +35,12 @@
 #     T22 = True-Feedback-Adaptive   - observes rep feedback, self-adjusts
 #     T23 = Reputation-Gradient       - perturbation-probe to learn rep function
 #     T24 = Detector-Aware-Mimicry    - mimics honest mean/variance/model
-#     T25 = Distributed-Influence     - 100 nodes × small bias, collective push
+#     T25 = Distributed-Influence     - 100 nodes x small bias, collective push
 #     T26 = Anti-Coordination         - same goal, different predictions, avoid clustering
 #     T27 = Reputation-Camouflage     - cycles excellent/attack, aggregate rep management
 #     T28 = Long-Horizon-Poisoning    - 0.1% wrong over 5K/6K/7K steps
 #     T29 = Honest-to-Malicious-Switching - random mode switches, no periodic model
-#     T30 = Threshold-Boundary        - lives at threshold-ε, dynamic ε
+#     T30 = Threshold-Boundary        - lives at threshold-e, dynamic e
 #     T31 = Reputation-Recovery-Exploit - cycles attack->recovery->attack
 #     T32 = Sybil-Identity-Cycling    - A degraded->B new->C new->... behavior transfer
 #     T33 = Collusion-Honest-Looking-Majority - 30% atk: 10% aggressive + 20% camouflage
@@ -113,7 +113,7 @@ function PrintHeader {
 function PrintAttackerTypes {
     Write-Host ""
     Write-Host '  37 ATTACKER TYPES (T0-T36):' -ForegroundColor Yellow
-    Write-Host '  ─────────────────────────────────────────────────────────' -ForegroundColor DarkGray
+    Write-Host '  ---------------------------------------------------------' -ForegroundColor DarkGray
     Write-Host '  T0-T15 (16 basic):' -ForegroundColor White
     Write-Host '    T0  = Random              T8  = Progressive-Drift' -ForegroundColor Gray
     Write-Host '    T1  = Mimicry300          T9  = Outlier-Burst' -ForegroundColor Gray
@@ -138,7 +138,7 @@ function PrintAttackerTypes {
     Write-Host '    T27 = Reputation-Camouflage      T35 = Multi-Vector-Adaptive' -ForegroundColor Gray
     Write-Host '    T28 = Long-Horizon-Poisoning     T36 = Worst-Case-Coordinated' -ForegroundColor Gray
     Write-Host '    T29 = Honest-Malicious-Switch' -ForegroundColor Gray
-    Write-Host '  ─────────────────────────────────────────────────────────' -ForegroundColor DarkGray
+    Write-Host '  ---------------------------------------------------------' -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -195,7 +195,7 @@ function RunStressTest($testName, $percent, $nodes, $steps) {
 # TEST OPTIONS - INDIVIDUAL
 # ============================================================================
 
-# ── 10K STEPS ──────────────────────────────────────────────────────────────
+# -- 10K STEPS --------------------------------------------------------------
 function Option1  { PrintBanner '10K STEPS + 10% ATTACK';  RunStressTest '10k-10pct'  10 $NODES 10000 }
 function Option2  { PrintBanner '10K STEPS + 20% ATTACK';  RunStressTest '10k-20pct'  20 $NODES 10000 }
 function Option3  { PrintBanner '10K STEPS + 30% ATTACK';  RunStressTest '10k-30pct'  30 $NODES 10000 }
@@ -206,7 +206,7 @@ function Option7  { PrintBanner '10K STEPS + 70% ATTACK';  RunStressTest '10k-70
 function Option8  { PrintBanner '10K STEPS + 80% ATTACK';  RunStressTest '10k-80pct'  80 $NODES 10000 }
 function Option9  { PrintBanner '10K STEPS + 90% ATTACK';  RunStressTest '10k-90pct'  90 $NODES 10000 }
 
-# ── 30K STEPS ──────────────────────────────────────────────────────────────
+# -- 30K STEPS --------------------------------------------------------------
 function Option10 { PrintBanner '30K STEPS + 10% ATTACK';  RunStressTest '30k-10pct'  10 $NODES 30000 }
 function Option11 { PrintBanner '30K STEPS + 20% ATTACK';  RunStressTest '30k-20pct'  20 $NODES 30000 }
 function Option12 { PrintBanner '30K STEPS + 30% ATTACK';  RunStressTest '30k-30pct'  30 $NODES 30000 }
@@ -217,7 +217,7 @@ function Option16 { PrintBanner '30K STEPS + 70% ATTACK';  RunStressTest '30k-70
 function Option17 { PrintBanner '30K STEPS + 80% ATTACK';  RunStressTest '30k-80pct'  80 $NODES 30000 }
 function Option18 { PrintBanner '30K STEPS + 90% ATTACK';  RunStressTest '30k-90pct'  90 $NODES 30000 }
 
-# ── 50K STEPS ──────────────────────────────────────────────────────────────
+# -- 50K STEPS --------------------------------------------------------------
 function Option19 { PrintBanner '50K STEPS + 10% ATTACK';  RunStressTest '50k-10pct'  10 $NODES 50000 }
 function Option20 { PrintBanner '50K STEPS + 20% ATTACK';  RunStressTest '50k-20pct'  20 $NODES 50000 }
 function Option21 { PrintBanner '50K STEPS + 30% ATTACK';  RunStressTest '50k-30pct'  30 $NODES 50000 }
@@ -228,7 +228,7 @@ function Option25 { PrintBanner '50K STEPS + 70% ATTACK';  RunStressTest '50k-70
 function Option26 { PrintBanner '50K STEPS + 80% ATTACK';  RunStressTest '50k-80pct'  80 $NODES 50000 }
 function Option27 { PrintBanner '50K STEPS + 90% ATTACK';  RunStressTest '50k-90pct'  90 $NODES 50000 }
 
-# ── 100K STEPS ─────────────────────────────────────────────────────────────
+# -- 100K STEPS -------------------------------------------------------------
 function Option28 { PrintBanner '100K STEPS + 10% ATTACK'; RunStressTest '100k-10pct' 10 $NODES 100000 }
 function Option29 { PrintBanner '100K STEPS + 20% ATTACK'; RunStressTest '100k-20pct' 20 $NODES 100000 }
 function Option30 { PrintBanner '100K STEPS + 30% ATTACK'; RunStressTest '100k-30pct' 30 $NODES 100000 }
@@ -239,13 +239,13 @@ function Option34 { PrintBanner '100K STEPS + 70% ATTACK'; RunStressTest '100k-7
 function Option35 { PrintBanner '100K STEPS + 80% ATTACK'; RunStressTest '100k-80pct' 80 $NODES 100000 }
 function Option36 { PrintBanner '100K STEPS + 90% ATTACK'; RunStressTest '100k-90pct' 90 $NODES 100000 }
 
-# ── CLEAN (0% attackers) ──────────────────────────────────────────────────
+# -- CLEAN (0% attackers) --------------------------------------------------
 function Option40 { PrintBanner 'CLEAN - 10K STEPS (0% attackers)';  RunStressTest 'clean-10k'  0 $NODES 10000 }
 function Option41 { PrintBanner 'CLEAN - 30K STEPS (0% attackers)';  RunStressTest 'clean-30k'  0 $NODES 30000 }
 function Option42 { PrintBanner 'CLEAN - 50K STEPS (0% attackers)';  RunStressTest 'clean-50k'  0 $NODES 50000 }
 function Option43 { PrintBanner 'CLEAN - 100K STEPS (0% attackers)'; RunStressTest 'clean-100k' 0 $NODES 100000 }
 
-# ── CUSTOM ─────────────────────────────────────────────────────────────────
+# -- CUSTOM -----------------------------------------------------------------
 function Option50 {
     PrintBanner 'CUSTOM - Set parameters'
     Write-Host ''
