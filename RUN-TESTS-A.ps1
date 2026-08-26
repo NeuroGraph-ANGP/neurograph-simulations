@@ -60,13 +60,20 @@ chcp 65001 > $null 2>&1
 
 # --- Find project directory (Cargo.toml) ---
 $ProjectDir = $PSScriptRoot
+if ([string]::IsNullOrEmpty($ProjectDir)) { 
+    $ProjectDir = (Get-Location).Path 
+}
 if (-not (Test-Path "$ProjectDir\Cargo.toml")) {
     $ProjectDir = (Get-Location).Path
     for ($k = 0; $k -lt 5; $k++) {
         if (Test-Path "$ProjectDir\Cargo.toml") { break }
-        $parent = Split-Path $ProjectDir -Parent
-        if ($parent -eq $ProjectDir) { break }
-        $ProjectDir = $parent
+        if (-not [string]::IsNullOrEmpty($ProjectDir)) {
+            $parent = Split-Path $ProjectDir -Parent
+            if ([string]::IsNullOrEmpty($parent) -or $parent -eq $ProjectDir) { break }
+            $ProjectDir = $parent
+        } else {
+            break
+        }
     }
 }
 if (-not (Test-Path "$ProjectDir\Cargo.toml")) { $ProjectDir = 'D:\neurograph_v4.3.1-FIXED' }
