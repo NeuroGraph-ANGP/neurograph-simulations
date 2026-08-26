@@ -1,52 +1,52 @@
 #=============================================================================
-# NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A
+# NeuroGraph ANGP v4.3.1-FIXED - TEST SUITE A
 # 2664 Nodes | 37 Attacker Types (T0-T36) | Behavioral Strategies
-# PowerShell — 37 attack types + individual options
+# PowerShell - 37 attack types + individual options
 # =============================================================================
 #
 # 37 ATTACKER TYPES (T0-T36):
 #   T0-T15 (16 basic):
-#     T0  = Random                  — random signals
-#     T1  = Mimicry300              — copies honest signal (window 300)
-#     T2  = Mimicry500              — copies honest signal (window 500)
-#     T3  = Adaptive-RepAware       — adapts based on reputation
-#     T4  = Coordinated-Bias        — coordinated bias among attackers
-#     T5  = Gaussian                — subtle gaussian perturbation
-#     T6  = FlipFlop                — alternates honest/attack
-#     T7  = Sleeper                 — dormant until threshold, then attacks
-#     T8  = Progressive-Drift       — slow, increasing drift
-#     T9  = Outlier-Burst           — bursts of aberrant values
-#     T10 = Clone-Copy              — clones an honest node's behavior
-#     T11 = Byzantine               — full byzantine behavior
-#     T12 = Sybil-Cluster           — cluster of fake identities
-#     T13 = Rep-Farmer              — false reputation cultivation
-#     T14 = Oscillating-Drift       — oscillating drift, hard to detect
-#     T15 = Colluding-Committee     — coordinated attacker committee
+#     T0  = Random                  - random signals
+#     T1  = Mimicry300              - copies honest signal (window 300)
+#     T2  = Mimicry500              - copies honest signal (window 500)
+#     T3  = Adaptive-RepAware       - adapts based on reputation
+#     T4  = Coordinated-Bias        - coordinated bias among attackers
+#     T5  = Gaussian                - subtle gaussian perturbation
+#     T6  = FlipFlop                - alternates honest/attack
+#     T7  = Sleeper                 - dormant until threshold, then attacks
+#     T8  = Progressive-Drift       - slow, increasing drift
+#     T9  = Outlier-Burst           - bursts of aberrant values
+#     T10 = Clone-Copy              - clones an honest node's behavior
+#     T11 = Byzantine               - full byzantine behavior
+#     T12 = Sybil-Cluster           - cluster of fake identities
+#     T13 = Rep-Farmer              - false reputation cultivation
+#     T14 = Oscillating-Drift       - oscillating drift, hard to detect
+#     T15 = Colluding-Committee     - coordinated attacker committee
 #
 #   T16-T21 (6 extended):
-#     T16 = Slow Poisoning Consensus — 99.9% valid, 0.1% wrong votes
-#     T17 = Eclipse Attack           — controls neighbors' view
-#     T18 = Majority Reference Manipulation — 60% same wrong value
-#     T19 = Sybil Replacement        — eliminated → new identity, rep reset
-#     T20 = Patient Byzantine        — perfectly honest 5K steps, then full attack
-#     T21 = Threshold Gamer          — avoids detection thresholds (7 thresholds)
+#     T16 = Slow Poisoning Consensus - 99.9% valid, 0.1% wrong votes
+#     T17 = Eclipse Attack           - controls neighbors' view
+#     T18 = Majority Reference Manipulation - 60% same wrong value
+#     T19 = Sybil Replacement        - eliminated -> new identity, rep reset
+#     T20 = Patient Byzantine        - perfectly honest 5K steps, then full attack
+#     T21 = Threshold Gamer          - avoids detection thresholds (7 thresholds)
 #
 #   T22-T36 (15 advanced):
-#     T22 = True-Feedback-Adaptive   — observes rep feedback, self-adjusts
-#     T23 = Reputation-Gradient       — perturbation-probe to learn rep function
-#     T24 = Detector-Aware-Mimicry    — mimics honest mean/variance/model
-#     T25 = Distributed-Influence     — 100 nodes × small bias, collective push
-#     T26 = Anti-Coordination         — same goal, different predictions, avoid clustering
-#     T27 = Reputation-Camouflage     — cycles excellent/attack, aggregate rep management
-#     T28 = Long-Horizon-Poisoning    — 0.1% wrong over 5K/6K/7K steps
-#     T29 = Honest-to-Malicious-Switching — random mode switches, no periodic model
-#     T30 = Threshold-Boundary        — lives at threshold-ε, dynamic ε
-#     T31 = Reputation-Recovery-Exploit — cycles attack→recovery→attack
-#     T32 = Sybil-Identity-Cycling    — A degraded→B new→C new→... behavior transfer
-#     T33 = Collusion-Honest-Looking-Majority — 30% atk: 10% aggressive + 20% camouflage
-#     T34 = Consensus-Targeted        — optimizes |consensus_attacked - consensus_honest|
-#     T35 = Multi-Vector-Adaptive     — boss fight: picks best strategy dynamically
-#     T36 = Worst-Case-Coordinated    — perfect coordination, different predictions
+#     T22 = True-Feedback-Adaptive   - observes rep feedback, self-adjusts
+#     T23 = Reputation-Gradient       - perturbation-probe to learn rep function
+#     T24 = Detector-Aware-Mimicry    - mimics honest mean/variance/model
+#     T25 = Distributed-Influence     - 100 nodes × small bias, collective push
+#     T26 = Anti-Coordination         - same goal, different predictions, avoid clustering
+#     T27 = Reputation-Camouflage     - cycles excellent/attack, aggregate rep management
+#     T28 = Long-Horizon-Poisoning    - 0.1% wrong over 5K/6K/7K steps
+#     T29 = Honest-to-Malicious-Switching - random mode switches, no periodic model
+#     T30 = Threshold-Boundary        - lives at threshold-ε, dynamic ε
+#     T31 = Reputation-Recovery-Exploit - cycles attack->recovery->attack
+#     T32 = Sybil-Identity-Cycling    - A degraded->B new->C new->... behavior transfer
+#     T33 = Collusion-Honest-Looking-Majority - 30% atk: 10% aggressive + 20% camouflage
+#     T34 = Consensus-Targeted        - optimizes |consensus_attacked - consensus_honest|
+#     T35 = Multi-Vector-Adaptive     - boss fight: picks best strategy dynamically
+#     T36 = Worst-Case-Coordinated    - perfect coordination, different predictions
 #
 # USAGE:
 #   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
@@ -101,7 +101,7 @@ function LogError($msg) { Log "[ERROR] $msg" }
 function PrintHeader {
     Write-Host ""
     Write-Host '================================================================' -ForegroundColor Cyan
-    Write-Host '= NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A              =' -ForegroundColor Cyan
+    Write-Host '= NeuroGraph ANGP v4.3.1-FIXED - TEST SUITE A              =' -ForegroundColor Cyan
     Write-Host '= Security & Stress Tests                                   =' -ForegroundColor Cyan
     Write-Host '= 37 Attacker Types (T0-T36) | Behavioral Strategies        =' -ForegroundColor Cyan
     Write-Host '= 2664 Nodes (333 shards x 8 nodes/shard)                  =' -ForegroundColor Cyan
@@ -175,7 +175,7 @@ function RunStressTest($testName, $percent, $nodes, $steps) {
     if ($percent -gt 0) {
         LogInfo ("37 attacker types (T0-T36) distributed proportionally at {0}%" -f $percent)
     } else {
-        LogInfo 'Clean run — 0% attackers'
+        LogInfo 'Clean run - 0% attackers'
     }
 
     EnsureBinary
@@ -192,7 +192,7 @@ function RunStressTest($testName, $percent, $nodes, $steps) {
 }
 
 # ============================================================================
-# TEST OPTIONS — INDIVIDUAL
+# TEST OPTIONS - INDIVIDUAL
 # ============================================================================
 
 # ── 10K STEPS ──────────────────────────────────────────────────────────────
@@ -240,21 +240,21 @@ function Option35 { PrintBanner '100K STEPS + 80% ATTACK'; RunStressTest '100k-8
 function Option36 { PrintBanner '100K STEPS + 90% ATTACK'; RunStressTest '100k-90pct' 90 $NODES 100000 }
 
 # ── CLEAN (0% attackers) ──────────────────────────────────────────────────
-function Option40 { PrintBanner 'CLEAN — 10K STEPS (0% attackers)';  RunStressTest 'clean-10k'  0 $NODES 10000 }
-function Option41 { PrintBanner 'CLEAN — 30K STEPS (0% attackers)';  RunStressTest 'clean-30k'  0 $NODES 30000 }
-function Option42 { PrintBanner 'CLEAN — 50K STEPS (0% attackers)';  RunStressTest 'clean-50k'  0 $NODES 50000 }
-function Option43 { PrintBanner 'CLEAN — 100K STEPS (0% attackers)'; RunStressTest 'clean-100k' 0 $NODES 100000 }
+function Option40 { PrintBanner 'CLEAN - 10K STEPS (0% attackers)';  RunStressTest 'clean-10k'  0 $NODES 10000 }
+function Option41 { PrintBanner 'CLEAN - 30K STEPS (0% attackers)';  RunStressTest 'clean-30k'  0 $NODES 30000 }
+function Option42 { PrintBanner 'CLEAN - 50K STEPS (0% attackers)';  RunStressTest 'clean-50k'  0 $NODES 50000 }
+function Option43 { PrintBanner 'CLEAN - 100K STEPS (0% attackers)'; RunStressTest 'clean-100k' 0 $NODES 100000 }
 
 # ── CUSTOM ─────────────────────────────────────────────────────────────────
 function Option50 {
-    PrintBanner 'CUSTOM — Set parameters'
+    PrintBanner 'CUSTOM - Set parameters'
     Write-Host ''
     Write-Host '  Set Steps (simulation step count):' -ForegroundColor Yellow
     Write-Host '  Examples: 500, 10000, 30000, 50000, 100000, 500000' -ForegroundColor DarkGray
     Write-Host '  Steps: ' -NoNewline
     $customSteps = Read-Host
     if (-not $customSteps -or $customSteps -notmatch '^\d+$' -or [int]$customSteps -lt 1) {
-        LogError 'Invalid steps — must be a positive integer'
+        LogError 'Invalid steps - must be a positive integer'
         return
     }
     Write-Host ''
@@ -264,14 +264,14 @@ function Option50 {
     Write-Host '  Density (%): ' -NoNewline
     $customPercent = Read-Host
     if (-not $customPercent -or $customPercent -notmatch '^\d+$' -or [int]$customPercent -lt 0 -or [int]$customPercent -gt 99) {
-        LogError 'Invalid density — must be between 0 and 99'
+        LogError 'Invalid density - must be between 0 and 99'
         return
     }
     $customSteps = [int]$customSteps
     $customPercent = [int]$customPercent
     $testLabel = "custom-${customSteps}s-${customPercent}pct"
     if ($customPercent -eq 0) {
-        PrintBanner "CUSTOM: $customSteps steps — CLEAN (0% attackers)"
+        PrintBanner "CUSTOM: $customSteps steps - CLEAN (0% attackers)"
     } else {
         PrintBanner "CUSTOM: $customSteps steps + $customPercent% attack"
     }
@@ -285,7 +285,7 @@ function Option50 {
 function ShowMenu {
     Write-Host ""
     Write-Host '================================================================' -ForegroundColor White
-    Write-Host '=   NeuroGraph ANGP v4.3.1-FIXED — TEST SUITE A — MENU    =' -ForegroundColor White
+    Write-Host '=   NeuroGraph ANGP v4.3.1-FIXED - TEST SUITE A - MENU    =' -ForegroundColor White
     Write-Host '=   37 Attacker Types (T0-T36) | Behavioral Strategies     =' -ForegroundColor White
     Write-Host '=   2664 Nodes (333 shards x 8 nodes/shard)                =' -ForegroundColor White
     Write-Host '================================================================' -ForegroundColor White
@@ -310,12 +310,12 @@ function ShowMenu {
     Write-Host '    31) 100K + 40%   32) 100K + 50%   33) 100K + 60%'
     Write-Host '    34) 100K + 70%   35) 100K + 80%   36) 100K + 90%'
     Write-Host ""
-    Write-Host '  CLEAN (0% attackers — no attack simulation)                 ' -ForegroundColor Green
+    Write-Host '  CLEAN (0% attackers - no attack simulation)                 ' -ForegroundColor Green
     Write-Host '    40) Clean 10K     41) Clean 30K     42) Clean 50K'
     Write-Host '    43) Clean 100K'
     Write-Host ""
     Write-Host '  CUSTOM                                                      ' -ForegroundColor Cyan
-    Write-Host '    50) Custom — set steps + attacker density (0-99%)'
+    Write-Host '    50) Custom - set steps + attacker density (0-99%)'
     Write-Host ""
     Write-Host '    99) Show 37 attacker types (T0-T36)'
     Write-Host '     0) Exit'
