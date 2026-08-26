@@ -24,9 +24,9 @@
 #     T15 = Colluding-Committee     - coordinated attacker committee
 #
 #   T16-T21 (6 extended):
-#     T16 = Slow Poisoning Consensus - 99.9% valid, 0.1% wrong votes
+#     T16 = Slow Poisoning Consensus - 99.9 valid, 0.1 wrong votes
 #     T17 = Eclipse Attack           - controls neighbors' view
-#     T18 = Majority Reference Manipulation - 60% same wrong value
+#     T18 = Majority Reference Manipulation - 60 same wrong value
 #     T19 = Sybil Replacement        - eliminated -> new identity, rep reset
 #     T20 = Patient Byzantine        - perfectly honest 5K steps, then full attack
 #     T21 = Threshold Gamer          - avoids detection thresholds (7 thresholds)
@@ -38,12 +38,12 @@
 #     T25 = Distributed-Influence     - 100 nodes x small bias, collective push
 #     T26 = Anti-Coordination         - same goal, different predictions, avoid clustering
 #     T27 = Reputation-Camouflage     - cycles excellent/attack, aggregate rep management
-#     T28 = Long-Horizon-Poisoning    - 0.1% wrong over 5K/6K/7K steps
+#     T28 = Long-Horizon-Poisoning    - 0.1 wrong over 5K/6K/7K steps
 #     T29 = Honest-to-Malicious-Switching - random mode switches, no periodic model
 #     T30 = Threshold-Boundary        - lives at threshold-e, dynamic e
 #     T31 = Reputation-Recovery-Exploit - cycles attack->recovery->attack
 #     T32 = Sybil-Identity-Cycling    - A degraded->B new->C new->... behavior transfer
-#     T33 = Collusion-Honest-Looking-Majority - 30% atk: 10% aggressive + 20% camouflage
+#     T33 = Collusion-Honest-Looking-Majority - 30pct atk: 10 aggressive + 20 camouflage
 #     T34 = Consensus-Targeted        - optimizes |consensus_attacked - consensus_honest|
 #     T35 = Multi-Vector-Adaptive     - boss fight: picks best strategy dynamically
 #     T36 = Worst-Case-Coordinated    - perfect coordination, different predictions
@@ -196,48 +196,48 @@ function RunStressTest($testName, $percent, $nodes, $steps) {
 # ============================================================================
 
 # -- 10K STEPS --------------------------------------------------------------
-function Option1  { PrintBanner '10K STEPS + 10% ATTACK';  RunStressTest '10k-10pct'  10 $NODES 10000 }
-function Option2  { PrintBanner '10K STEPS + 20% ATTACK';  RunStressTest '10k-20pct'  20 $NODES 10000 }
-function Option3  { PrintBanner '10K STEPS + 30% ATTACK';  RunStressTest '10k-30pct'  30 $NODES 10000 }
-function Option4  { PrintBanner '10K STEPS + 40% ATTACK';  RunStressTest '10k-40pct'  40 $NODES 10000 }
-function Option5  { PrintBanner '10K STEPS + 50% ATTACK';  RunStressTest '10k-50pct'  50 $NODES 10000 }
-function Option6  { PrintBanner '10K STEPS + 60% ATTACK';  RunStressTest '10k-60pct'  60 $NODES 10000 }
-function Option7  { PrintBanner '10K STEPS + 70% ATTACK';  RunStressTest '10k-70pct'  70 $NODES 10000 }
-function Option8  { PrintBanner '10K STEPS + 80% ATTACK';  RunStressTest '10k-80pct'  80 $NODES 10000 }
-function Option9  { PrintBanner '10K STEPS + 90% ATTACK';  RunStressTest '10k-90pct'  90 $NODES 10000 }
+function Option1  { PrintBanner '10K STEPS + 10pct ATTACK';  RunStressTest '10k-10pct'  10 $NODES 10000 }
+function Option2  { PrintBanner '10K STEPS + 20pct ATTACK';  RunStressTest '10k-20pct'  20 $NODES 10000 }
+function Option3  { PrintBanner '10K STEPS + 30pct ATTACK';  RunStressTest '10k-30pct'  30 $NODES 10000 }
+function Option4  { PrintBanner '10K STEPS + 40pct ATTACK';  RunStressTest '10k-40pct'  40 $NODES 10000 }
+function Option5  { PrintBanner '10K STEPS + 50pct ATTACK';  RunStressTest '10k-50pct'  50 $NODES 10000 }
+function Option6  { PrintBanner '10K STEPS + 60pct ATTACK';  RunStressTest '10k-60pct'  60 $NODES 10000 }
+function Option7  { PrintBanner '10K STEPS + 70pct ATTACK';  RunStressTest '10k-70pct'  70 $NODES 10000 }
+function Option8  { PrintBanner '10K STEPS + 80pct ATTACK';  RunStressTest '10k-80pct'  80 $NODES 10000 }
+function Option9  { PrintBanner '10K STEPS + 90pct ATTACK';  RunStressTest '10k-90pct'  90 $NODES 10000 }
 
 # -- 30K STEPS --------------------------------------------------------------
-function Option10 { PrintBanner '30K STEPS + 10% ATTACK';  RunStressTest '30k-10pct'  10 $NODES 30000 }
-function Option11 { PrintBanner '30K STEPS + 20% ATTACK';  RunStressTest '30k-20pct'  20 $NODES 30000 }
-function Option12 { PrintBanner '30K STEPS + 30% ATTACK';  RunStressTest '30k-30pct'  30 $NODES 30000 }
-function Option13 { PrintBanner '30K STEPS + 40% ATTACK';  RunStressTest '30k-40pct'  40 $NODES 30000 }
-function Option14 { PrintBanner '30K STEPS + 50% ATTACK';  RunStressTest '30k-50pct'  50 $NODES 30000 }
-function Option15 { PrintBanner '30K STEPS + 60% ATTACK';  RunStressTest '30k-60pct'  60 $NODES 30000 }
-function Option16 { PrintBanner '30K STEPS + 70% ATTACK';  RunStressTest '30k-70pct'  70 $NODES 30000 }
-function Option17 { PrintBanner '30K STEPS + 80% ATTACK';  RunStressTest '30k-80pct'  80 $NODES 30000 }
-function Option18 { PrintBanner '30K STEPS + 90% ATTACK';  RunStressTest '30k-90pct'  90 $NODES 30000 }
+function Option10 { PrintBanner '30K STEPS + 10pct ATTACK';  RunStressTest '30k-10pct'  10 $NODES 30000 }
+function Option11 { PrintBanner '30K STEPS + 20pct ATTACK';  RunStressTest '30k-20pct'  20 $NODES 30000 }
+function Option12 { PrintBanner '30K STEPS + 30pct ATTACK';  RunStressTest '30k-30pct'  30 $NODES 30000 }
+function Option13 { PrintBanner '30K STEPS + 40pct ATTACK';  RunStressTest '30k-40pct'  40 $NODES 30000 }
+function Option14 { PrintBanner '30K STEPS + 50pct ATTACK';  RunStressTest '30k-50pct'  50 $NODES 30000 }
+function Option15 { PrintBanner '30K STEPS + 60pct ATTACK';  RunStressTest '30k-60pct'  60 $NODES 30000 }
+function Option16 { PrintBanner '30K STEPS + 70pct ATTACK';  RunStressTest '30k-70pct'  70 $NODES 30000 }
+function Option17 { PrintBanner '30K STEPS + 80pct ATTACK';  RunStressTest '30k-80pct'  80 $NODES 30000 }
+function Option18 { PrintBanner '30K STEPS + 90pct ATTACK';  RunStressTest '30k-90pct'  90 $NODES 30000 }
 
 # -- 50K STEPS --------------------------------------------------------------
-function Option19 { PrintBanner '50K STEPS + 10% ATTACK';  RunStressTest '50k-10pct'  10 $NODES 50000 }
-function Option20 { PrintBanner '50K STEPS + 20% ATTACK';  RunStressTest '50k-20pct'  20 $NODES 50000 }
-function Option21 { PrintBanner '50K STEPS + 30% ATTACK';  RunStressTest '50k-30pct'  30 $NODES 50000 }
-function Option22 { PrintBanner '50K STEPS + 40% ATTACK';  RunStressTest '50k-40pct'  40 $NODES 50000 }
-function Option23 { PrintBanner '50K STEPS + 50% ATTACK';  RunStressTest '50k-50pct'  50 $NODES 50000 }
-function Option24 { PrintBanner '50K STEPS + 60% ATTACK';  RunStressTest '50k-60pct'  60 $NODES 50000 }
-function Option25 { PrintBanner '50K STEPS + 70% ATTACK';  RunStressTest '50k-70pct'  70 $NODES 50000 }
-function Option26 { PrintBanner '50K STEPS + 80% ATTACK';  RunStressTest '50k-80pct'  80 $NODES 50000 }
-function Option27 { PrintBanner '50K STEPS + 90% ATTACK';  RunStressTest '50k-90pct'  90 $NODES 50000 }
+function Option19 { PrintBanner '50K STEPS + 10pct ATTACK';  RunStressTest '50k-10pct'  10 $NODES 50000 }
+function Option20 { PrintBanner '50K STEPS + 20pct ATTACK';  RunStressTest '50k-20pct'  20 $NODES 50000 }
+function Option21 { PrintBanner '50K STEPS + 30pct ATTACK';  RunStressTest '50k-30pct'  30 $NODES 50000 }
+function Option22 { PrintBanner '50K STEPS + 40pct ATTACK';  RunStressTest '50k-40pct'  40 $NODES 50000 }
+function Option23 { PrintBanner '50K STEPS + 50pct ATTACK';  RunStressTest '50k-50pct'  50 $NODES 50000 }
+function Option24 { PrintBanner '50K STEPS + 60pct ATTACK';  RunStressTest '50k-60pct'  60 $NODES 50000 }
+function Option25 { PrintBanner '50K STEPS + 70pct ATTACK';  RunStressTest '50k-70pct'  70 $NODES 50000 }
+function Option26 { PrintBanner '50K STEPS + 80pct ATTACK';  RunStressTest '50k-80pct'  80 $NODES 50000 }
+function Option27 { PrintBanner '50K STEPS + 90pct ATTACK';  RunStressTest '50k-90pct'  90 $NODES 50000 }
 
 # -- 100K STEPS -------------------------------------------------------------
-function Option28 { PrintBanner '100K STEPS + 10% ATTACK'; RunStressTest '100k-10pct' 10 $NODES 100000 }
-function Option29 { PrintBanner '100K STEPS + 20% ATTACK'; RunStressTest '100k-20pct' 20 $NODES 100000 }
-function Option30 { PrintBanner '100K STEPS + 30% ATTACK'; RunStressTest '100k-30pct' 30 $NODES 100000 }
-function Option31 { PrintBanner '100K STEPS + 40% ATTACK'; RunStressTest '100k-40pct' 40 $NODES 100000 }
-function Option32 { PrintBanner '100K STEPS + 50% ATTACK'; RunStressTest '100k-50pct' 50 $NODES 100000 }
-function Option33 { PrintBanner '100K STEPS + 60% ATTACK'; RunStressTest '100k-60pct' 60 $NODES 100000 }
-function Option34 { PrintBanner '100K STEPS + 70% ATTACK'; RunStressTest '100k-70pct' 70 $NODES 100000 }
-function Option35 { PrintBanner '100K STEPS + 80% ATTACK'; RunStressTest '100k-80pct' 80 $NODES 100000 }
-function Option36 { PrintBanner '100K STEPS + 90% ATTACK'; RunStressTest '100k-90pct' 90 $NODES 100000 }
+function Option28 { PrintBanner '100K STEPS + 10pct ATTACK'; RunStressTest '100k-10pct' 10 $NODES 100000 }
+function Option29 { PrintBanner '100K STEPS + 20pct ATTACK'; RunStressTest '100k-20pct' 20 $NODES 100000 }
+function Option30 { PrintBanner '100K STEPS + 30pct ATTACK'; RunStressTest '100k-30pct' 30 $NODES 100000 }
+function Option31 { PrintBanner '100K STEPS + 40pct ATTACK'; RunStressTest '100k-40pct' 40 $NODES 100000 }
+function Option32 { PrintBanner '100K STEPS + 50pct ATTACK'; RunStressTest '100k-50pct' 50 $NODES 100000 }
+function Option33 { PrintBanner '100K STEPS + 60pct ATTACK'; RunStressTest '100k-60pct' 60 $NODES 100000 }
+function Option34 { PrintBanner '100K STEPS + 70pct ATTACK'; RunStressTest '100k-70pct' 70 $NODES 100000 }
+function Option35 { PrintBanner '100K STEPS + 80pct ATTACK'; RunStressTest '100k-80pct' 80 $NODES 100000 }
+function Option36 { PrintBanner '100K STEPS + 90pct ATTACK'; RunStressTest '100k-90pct' 90 $NODES 100000 }
 
 # -- CLEAN (0 pct attackers) --------------------------------------------------
 function Option40 { PrintBanner 'CLEAN - 10K STEPS (0 pct attackers)';  RunStressTest 'clean-10k'  0 $NODES 10000 }
@@ -261,7 +261,7 @@ function Option50 {
     Write-Host '  Set Attacker density (0-99 pct):' -ForegroundColor Yellow
     Write-Host '  0 = clean run (no attackers)' -ForegroundColor DarkGray
     Write-Host '  10 = 10 pct attackers ... 90 = 90 pct attackers' -ForegroundColor DarkGray
-    Write-Host '  Density (%): ' -NoNewline
+    Write-Host '  Density (pct): ' -NoNewline
     $customPercent = Read-Host
     if (-not $customPercent -or $customPercent -notmatch '^\d+$' -or [int]$customPercent -lt 0 -or [int]$customPercent -gt 99) {
         LogError 'Invalid density - must be between 0 and 99'
@@ -291,24 +291,24 @@ function ShowMenu {
     Write-Host '================================================================' -ForegroundColor White
     Write-Host ""
     Write-Host '  10K STEPS + ATTACKERS                                       ' -ForegroundColor Yellow
-    Write-Host '     1) 10K + 10%     2) 10K + 20%     3) 10K + 30%'
-    Write-Host '     4) 10K + 40%     5) 10K + 50%     6) 10K + 60%'
-    Write-Host '     7) 10K + 70%     8) 10K + 80%     9) 10K + 90%'
+    Write-Host '     1) 10K + 10pct     2) 10K + 20pct     3) 10K + 30pct'
+    Write-Host '     4) 10K + 40pct     5) 10K + 50pct     6) 10K + 60pct'
+    Write-Host '     7) 10K + 70pct     8) 10K + 80pct     9) 10K + 90pct'
     Write-Host ""
     Write-Host '  30K STEPS + ATTACKERS                                       ' -ForegroundColor Yellow
-    Write-Host '    10) 30K + 10%    11) 30K + 20%    12) 30K + 30%'
-    Write-Host '    13) 30K + 40%    14) 30K + 50%    15) 30K + 60%'
-    Write-Host '    16) 30K + 70%    17) 30K + 80%    18) 30K + 90%'
+    Write-Host '    10) 30K + 10pct    11) 30K + 20pct    12) 30K + 30pct'
+    Write-Host '    13) 30K + 40pct    14) 30K + 50pct    15) 30K + 60pct'
+    Write-Host '    16) 30K + 70pct    17) 30K + 80pct    18) 30K + 90pct'
     Write-Host ""
     Write-Host '  50K STEPS + ATTACKERS                                       ' -ForegroundColor Yellow
-    Write-Host '    19) 50K + 10%    20) 50K + 20%    21) 50K + 30%'
-    Write-Host '    22) 50K + 40%    23) 50K + 50%    24) 50K + 60%'
-    Write-Host '    25) 50K + 70%    26) 50K + 80%    27) 50K + 90%'
+    Write-Host '    19) 50K + 10pct    20) 50K + 20pct    21) 50K + 30pct'
+    Write-Host '    22) 50K + 40pct    23) 50K + 50pct    24) 50K + 60pct'
+    Write-Host '    25) 50K + 70pct    26) 50K + 80pct    27) 50K + 90pct'
     Write-Host ""
     Write-Host '  100K STEPS + ATTACKERS                                      ' -ForegroundColor Yellow
-    Write-Host '    28) 100K + 10%   29) 100K + 20%   30) 100K + 30%'
-    Write-Host '    31) 100K + 40%   32) 100K + 50%   33) 100K + 60%'
-    Write-Host '    34) 100K + 70%   35) 100K + 80%   36) 100K + 90%'
+    Write-Host '    28) 100K + 10pct   29) 100K + 20pct   30) 100K + 30pct'
+    Write-Host '    31) 100K + 40pct   32) 100K + 50pct   33) 100K + 60pct'
+    Write-Host '    34) 100K + 70pct   35) 100K + 80pct   36) 100K + 90pct'
     Write-Host ""
     Write-Host '  CLEAN (0 pct attackers - no attack simulation)                 ' -ForegroundColor Green
     Write-Host '    40) Clean 10K     41) Clean 30K     42) Clean 50K'
